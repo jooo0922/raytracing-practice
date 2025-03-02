@@ -1,4 +1,6 @@
-#include <iostream>
+#include <cstdio>
+#include <string>
+#include <fstream>
 #include "core/color.hpp"
 #include "core/ray.hpp"
 #include "core/vec3.hpp"
@@ -59,8 +61,26 @@ color ray_color(const ray &r)
   return (1.0 - a) * color(1.0, 1.0, 1.0) + a * color(0.5, 0.7, 1.0);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
+  /** 명령줄 인수로 출력 파일(= .ppm 이미지 파일) 경로 전달받기 */
+  // 기본 출력 파일 경로 지정
+  std::string output_path = "output/image.ppm";
+  if (argc > 1)
+  {
+    output_path = argv[1];
+  }
+
+  /** 전달받은 경로에 .ppm 이미지 파일 생성 및 열기 */
+  // '파일 생성 및 쓰기' 해야 하므로 std::ofstream 사용 (기존 파일 읽기 시 std::ifstream)
+  std::ofstream output_file(output_path);
+  if (!output_file)
+  {
+    // 파일 생성 및 열기 실패 처리
+    fprintf(stderr, "Error: could not open file %s for writing.\n", output_path.c_str());
+    return 1;
+  }
+
   /** .ppm 이미지 파일의 종횡비(aspect_ration) 및 해상도(rows, columns) 정의 */
   auto aspect_ratio = 16.0 / 9.0;                                  // 이미지의 종횡비를 16:9 로 설정
   int image_width = 400;                                           // 이미지 너비는 상수이며, 이미지 너비 값에 따라 이미지 높이 값이 종횡비와 곱해져서 계산됨.
@@ -89,21 +109,21 @@ int main()
   // 'pixel grid'의 좌상단 픽셀(이미지 좌표 상으로 (0,0)에 해당하는 픽셀)의 '3D 공간 상의' 좌표 계산 (Figure 4 에서 P(0,0) 으로 표시)
   auto pixel00_loc = viewport_upper_left + 0.5 * (pixel_delta_u + pixel_delta_v);
 
-  // Render
-
+  /** 생성된 .ppm 이미지 파일에 데이터 출력 */
   // .ppm metadata 출력 (https://raytracing.github.io/books/RayTracingInOneWeekend.html > Figure 1 참고)
-  std::cout << "P3\n"
-            << image_width << ' ' << image_height << "\n255\n";
+  output_file << "P3\n"
+              << image_width << ' ' << image_height << "\n255\n";
 
   /** viewport 각 픽셀들을 순회하며 각 픽셀 지점을 통과하는 ray 로부터 계산된 색상값을 .ppm 에 출력 */
   for (int j = 0; j < image_height; ++j)
   {
     /**
-     * .ppm 에 출력할 색상값을 한 줄(row)씩 처리할 때마다 남아있는 줄을 std::clog(에러 출력 스트림) 로 출력
-     * std::cout 은 색상값 출력 시 사용되므로, 이에 대한 대체제로써 std::clog 를 사용한 것!
-     * (참고로, std::flush 는 스트림에 대기중인 버퍼의 내용을 비운 후, 강제로 출력)
+     * .ppm 에 출력할 색상값을 한 줄(row)씩 처리할 때마다 남아있는 줄 수 콘솔 출력
+     * (참고로, fflush(stdout) 는 출력 스트림(stdout)의 버퍼를 비움.)
+     * -> <iostream> 은 버퍼링으로 인해 덮어쓰기가 정상 작동하지 않아 cstdio 함수를 사용하여 출력함.
      */
-    std::clog << "\rScanlines remaining: " << (image_height - j) << ' ' << std::flush;
+    printf("\rScanlines remaining: %d ", image_height - j);
+    fflush(stdout);
     for (int i = 0; i < image_width; ++i)
     {
       // viewport 각 픽셀 중점의 '3D 공간 상의' 좌표 계산
@@ -112,18 +132,19 @@ int main()
       // 카메라 중점 ~ viewport 각 픽셀 중점까지 향하는 방향벡터 계산
       auto ray_direction = pixel_center - camera_center;
 
-      // 카메라 ~ viewport 각 픽셀 중점까지 향하는 반직선(ray) 타입 변수 r 선언 및 초기화
+      // 카메라 ~ viewport 각 픽셀 중점까지 향하는 반직선(ray) 생성
       ray r(camera_center, ray_direction);
 
-      // 주어진 반직선(ray) r 을 입력받아 특정 색상을 반환받아 픽셀 색상 계산
+      // 주어진 반직선(ray) r 을 입력받아 pixel 에 출력할 색상 계산 후 .ppm 파일에 쓰기
       auto pixel_color = ray_color(r);
-      // color 객체에 정의된 색상값을 std::cout 스트림 출력하는 유틸 함수 호출
-      write_color(std::cout, pixel_color);
+      write_color(output_file, pixel_color);
     }
   }
 
-  // 반복문이 종료되면 .ppm 에 출력할 색상 계산이 완료되었음을 std::clog 로 콘솔 출력함.
-  std::clog << "\rDone.					\n";
+  // .ppm 에 색상값을 다 쓰고나면 완료 메시지 출력 및 파일 닫기
+  printf("\rDone.                       \n");
+  fflush(stdout);
+  output_file.close();
 
   return 0;
 }
