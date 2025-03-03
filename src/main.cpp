@@ -1,9 +1,9 @@
 #include <cstdio>
 #include <string>
 #include <fstream>
-#include "core/color.hpp"
-#include "core/ray.hpp"
-#include "core/vec3.hpp"
+#include "common/color.hpp"
+#include "common/ray.hpp"
+#include "common/vec3.hpp"
 
 // 주어진 구체에 대하여 주어진 반직선이 교차하는지 확인하는 함수
 double hit_sphere(const point3 &center, double radius, const ray &r)
