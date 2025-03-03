@@ -13,6 +13,7 @@ public:
   bool front_face; // 반직선이 hittable 외부/내부에 위치하는지 여부 (관련 필기 하단 참고)
 
   // ray - hittable 교차점 normal 및 ray 위치 계산 함수 (입력 매개변수 outward_normal 은 항상 단위 벡터로 정규화된다고 가정)
+  // 참고로, geometry 특성을 잘 파악하고 있다면, 외부 geometry code(ex> sphere::hit())에서 각 지점의 정규화된 벡터를 미리 계산해서 넘겨주는 게 더 효율적임.
   void set_face_normal(const ray &r, const vec3 &outward_normal)
   {
     // ray - outward_normal 내적값 부호에 따라 ray 가 내부/외부에 위치하는 지 결정
