@@ -1,64 +1,27 @@
-#include <cstdio>
-#include <string>
-#include <fstream>
-#include "common/color.hpp"
-#include "common/ray.hpp"
-#include "common/vec3.hpp"
-
-// 주어진 구체에 대하여 주어진 반직선이 교차하는지 확인하는 함수
-double hit_sphere(const point3 &center, double radius, const ray &r)
-{
-  // 반직선-구체 교차 여부를 검증하는 판별식 구현
-  vec3 oc = r.origin() - center;                  // 반직선 출발점 ~ 구체의 중점까지의 벡터 (본문 공식에서 (A-C) 에 해당)
-  auto a = r.direction().length_squared();        // 반직선 방향벡터 자신과의 내적 (본문 공식에서 b⋅b 에 해당) > 벡터 자신과의 내적을 벡터 길이 제곱으로 리팩터링
-  auto half_b = dot(oc, r.direction());           // 2 * 반직선 방향벡터와 (A-C) 벡터와의 내적 (본문 공식에서 2tb⋅(A−C) 에 해당) > half_b 로 변경
-  auto c = oc.length_squared() - radius * radius; // (A-C) 벡터 자신과의 내적 - 반직선 제곱 (본문 공식에서 (A−C)⋅(A−C)−r^2 에 해당) > 벡터 자신과의 내적을 벡터 길이 제곱으로 리팩터링
-  auto discriminant = half_b * half_b - a * c;    // 근의 공식 판별식 계산 (b^2-4ac 에 해당. discriminant 는 근의 공식의 판별식을 뜻하는 영단어) > b = 2h 로 치환해서 근의 공식 간소화
-
-  // 구체와 반직선의 교차점이 놓인 반직선 상의 비율값 t 를 계산하여 반환.
-  if (discriminant < 0)
-  {
-    // 판별식이 0보다 작아 이차방정식의 해가 없으면(= 교차점이 없으면) -1 반환하고 함수 종료.
-    return -1.0;
-  }
-  else
-  {
-    /**
-     * 판별식이 0 이거나 0보다 커서 이차방정식의 해 t 가 존재할 경우, 근의 공식을 직접 계산하여 t 값 계산.
-     *
-     * 이때, 판별식이 0보다 커서 해가 2개(= 교차점이 2개)인 경우,
-     * 더 작은 비율값 t 값을 사용해 더 작은 이차방정식의 해를 반환함.
-     *
-     * 왜냐하면, 더 작은 비율값 t 는 카메라(= 반직선 출발점)에서 더 가까운 지점의 비율값이므로,
-     * 반직선과 구체의 '첫 번쩨 교차점' 이라는 뜻이고, 구체에서 첫 번째 교차점 부분만 카메라에 담기기 때문!
-     */
-    return (-half_b - sqrt(discriminant)) / a; // 리팩터링으로 간소화된 근의 공식 사용
-  }
-}
+#include "common/rtweekend.hpp" // common header 최상단에 가장 먼저 include (관련 필기 하단 참고)
+#include "hittable/hittable.hpp"
+#include "hittable/hittable_list.hpp"
+#include "hittable/sphere.hpp"
 
 // 주어진 반직선(ray)에 대한 특정 색상을 반환하는 함수
-color ray_color(const ray &r)
+color ray_color(const ray &r, const hittable &world)
 {
-  // 중점이 (0, 0, -1) 이고, 반지름이 0.5 인 구체와 반직선이 맨 처음으로 교차하는 지점의 반직선 상의 비율값 t 를 반환
-  auto t = hit_sphere(point3(0, 0, -1), 0.5, r);
-
-  // 즉, 구체와 반직선의 교차점이 존재할 경우 처리
-  if (t > 0.0)
+  // world 에 추가된 hittable objects 들을 순회하며 현재 ray 와 교차 검사 수행
+  hit_record rec;
+  if (world.hit(r, 0, infinity, rec))
   {
-    // 구체 표면 상의 교차점 노멀벡터 계산
-    vec3 N = unit_vector(r.at(t) - vec3(0, 0, -1));
-
-    // [-1.0, 1.0] 범위의 노멀벡터를 [0.0, 1.0] 범위의 색상값으로 맵핑
-    return 0.5 * color(N.x() + 1, N.y() + 1, N.z() + 1);
+    // 하나라도 충돌한 hittable object 가 존재한다면, rec 변수에는 현재 ray 방향에서 카메라로부터 가장 가까운 교차점의 충돌 정보가 기록됨.
+    // -> 카메라에서 가장 가까운 교차점의 노멀벡터([-1.0, 1.0] 범위)를 [0.0, 1.0] 범위의 색상값으로 맵핑
+    return 0.5f * (rec.normal + color(1.0f, 1.0f, 1.0f));
   }
 
   // 반직선을 길이가 1인 단위 벡터로 정규화
   vec3 unit_direction = unit_vector(r.direction());
   // [-1.0, 1.0] 범위로 정규화된 단위 벡터의 y 값을 [0.0, 1.0] 범위로 맵핑
-  auto a = 0.5 * (unit_direction.y() + 1.0);
+  auto a = 0.5f * (unit_direction.y() + 1.0f);
 
   // 흰색과 파란색을 [0.0, 1.0] 범위의 a값에 따라 혼합(선형보간)하여 .ppm 에 출력할 색상 계산
-  return (1.0 - a) * color(1.0, 1.0, 1.0) + a * color(0.5, 0.7, 1.0);
+  return (1.0f - a) * color(1.0f, 1.0f, 1.0f) + a * color(0.5f, 0.7f, 1.0f);
 }
 
 int main(int argc, char *argv[])
@@ -86,6 +49,11 @@ int main(int argc, char *argv[])
   int image_width = 400;                                           // 이미지 너비는 상수이며, 이미지 너비 값에 따라 이미지 높이 값이 종횡비와 곱해져서 계산됨.
   int image_height = static_cast<int>(image_width / aspect_ratio); // 이미지 높이는 정수형이므로, 너비와 종횡비를 곱한 실수값을 정수형으로 형변환함.
   image_height = (image_height < 1) ? 1 : image_height;            // 이미지 너비는 항상 1보다는 크도록 함.
+
+  /** world(scene) 역할을 수행하는 hittable_list 생성 및 hittable object 추가 */
+  hittable_list world;
+  world.add(std::make_shared<sphere>(point3(0.0f, 0.0f, -1.0f), 0.5f));      // 반지름이 0.5 인 sphere 추가
+  world.add(std::make_shared<sphere>(point3(0.0f, -100.5f, -1.0f), 100.0f)); // 반지름이 100 인 sphere 추가
 
   /** 카메라 및 viewport 파라미터 정의 */
   auto focal_length = 1.0;                                                                   // 카메라 중점(eye point)과 viewport 사이의 거리 (현재는 단위 거리 1로 지정함.)
@@ -135,8 +103,8 @@ int main(int argc, char *argv[])
       // 카메라 ~ viewport 각 픽셀 중점까지 향하는 반직선(ray) 생성
       ray r(camera_center, ray_direction);
 
-      // 주어진 반직선(ray) r 을 입력받아 pixel 에 출력할 색상 계산 후 .ppm 파일에 쓰기
-      auto pixel_color = ray_color(r);
+      // 주어진 반직선(ray) r 에 대해 intersection 검사를 수행한 결과 현재 pixel 에 출력할 색상 계산 후 .ppm 파일에 쓰기
+      auto pixel_color = ray_color(r, world);
       write_color(output_file, pixel_color);
     }
   }
@@ -148,3 +116,16 @@ int main(int argc, char *argv[])
 
   return 0;
 }
+
+/**
+ * common header 를 가장 먼저 include 하는 이유
+ *
+ *
+ * 수학 상수, utility 함수, color, ray, vec3 등 기본 헤더들이 정의된
+ * 공통 헤더로써 rtweekend.hpp 를 main.cpp 최상단에 가장 먼저 include 해야 함.
+ *
+ * 그래야 다른 헤더 파일들에서 이미 rtweekend.hpp 가 이미 포함되어 있다고 가정하고
+ * 그 안에 선언되어 있는 코드들을 가져다가 사용할 수 있음.
+ *
+ * 이렇게 하면 rtweekend.hpp 가 필요한 파일들에 중복 포함을 방지할 수 있음.
+ */
