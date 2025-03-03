@@ -1,9 +1,6 @@
 #ifndef VEC3_HPP
 #define VEC3_HPP
 
-#include <cmath> // std::sqrt()
-#include <iostream>
-
 // using 을 이용해서 namespace 안의 특정 함수만 가져올 수 있음.
 using std::sqrt;
 

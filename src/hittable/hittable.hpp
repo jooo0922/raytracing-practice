@@ -1,8 +1,6 @@
 #ifndef HITTABLE_HPP
 #define HITTABLE_HPP
 
-#include "common/ray.hpp"
-
 // hit_record(충돌 정보) 클래스 정의
 class hit_record
 {

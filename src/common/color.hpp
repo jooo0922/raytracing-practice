@@ -1,7 +1,6 @@
 #ifndef COLOR_HPP
 #define COLOR_HPP
 
-#include <iostream>
 #include "vec3.hpp"
 
 // vec3 에 대한 별칭으로써 color 선언

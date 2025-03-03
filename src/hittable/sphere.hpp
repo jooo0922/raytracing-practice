@@ -2,7 +2,6 @@
 #define SPHERE_HPP
 
 #include "hittable.hpp"
-#include "common/vec3.hpp"
 
 // sphere(구체) 클래스를 hittable(피충돌 물체) 추상 클래스로부터 상속받아 정의
 class sphere : public hittable
