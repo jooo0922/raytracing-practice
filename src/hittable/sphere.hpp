@@ -46,9 +46,10 @@ public:
 
     // 반직선 유효범위 내의 비율값 t 가 존재한다면, 이 비율값으로 충돌 정보를 출력 매개변수 rec 에 저장함.
     // (https://raytracing.github.io/books/RayTracingInOneWeekend.html#surfacenormalsandmultipleobjects/shadingwithsurfacenormals > 구체 표면 상의 노멀벡터 계산 관련 Figure 6 참고)
-    rec.t = root;                           // 반직선 상에서 충돌 지점이 위치하는 비율값 t 계산
-    rec.p = r.at(rec.t);                    // 충돌 지점의 좌표값 계산
-    rec.normal = (rec.p - center) / radius; // 구체 표면 상에서 충돌 지점의 노멀벡터(방향벡터) 계산
+    rec.t = root;                                    // 반직선 상에서 충돌 지점이 위치하는 비율값 t 계산
+    rec.p = r.at(rec.t);                             // 충돌 지점의 좌표값 계산
+    vec3 outward_normal = (rec.p - center) / radius; // 구체 표면 상에서 충돌 지점의 정규화된 normal 계산
+    rec.set_face_normal(r, outward_normal);          // ray 위치와 그에 따른 충돌 지점의 normal 재계산
 
     // 반직선 유효범위 내의 비율값 t가 존재한다면, 구체와 반직선의 충돌 지점이 존재하는 것으로 판단하여 true 반환
     return true;
