@@ -7,9 +7,19 @@
 class hit_record
 {
 public:
-  point3 p;    // 반직선과 충돌한 지점의 좌표값
-  vec3 normal; // 반직선과 충돌한 지점의 노멀벡터
-  double t;    // 반직선 상에서 충돌한 지점이 위치한 비율값 t
+  point3 p;        // 반직선과 충돌한 지점의 좌표값
+  vec3 normal;     // 반직선과 충돌한 지점의 노멀벡터
+  double t;        // 반직선 상에서 충돌한 지점이 위치한 비율값 t
+  bool front_face; // 반직선이 hittable 외부/내부에 위치하는지 여부 (관련 필기 하단 참고)
+
+  // ray - hittable 교차점 normal 및 ray 위치 계산 함수 (입력 매개변수 outward_normal 은 항상 단위 벡터로 정규화된다고 가정)
+  void set_face_normal(const ray &r, const vec3 &outward_normal)
+  {
+    // ray - outward_normal 내적값 부호에 따라 ray 가 내부/외부에 위치하는 지 결정
+    front_face = dot(r.direction(), outward_normal) < 0;
+    // ray 위치에 따라 ray - hittable 교차점 normal 과 ray 가 항상 방대 방향을 향하도록 계산
+    normal = front_face ? outward_normal : -outward_normal;
+  };
 };
 
 // hittable (피충돌 물체) 추상 클래스 정의
@@ -124,5 +134,55 @@ public:
   이렇게 하면 똑같이 아무런 작업도 수행하지 않는
   기본 생성자와 기본 소멸자를 간결한 코드로 작성할 수 있다는 장점이 있음!
 */
+
+/**
+ * hit_record::front_face
+ *
+ *
+ * ray 가 hittable 외부 또는 내부 중 어디에 위치하는지 정보를 저장하는 멤버변수
+ *
+ * 이게 필요한 이유는 hittable 오브젝트의 안쪽 면을 렌더링할 지,
+ * 바깥 쪽 면을 렌더링할 지 파악하기 위함.
+ *
+ * ray 가 hittable 내부에서 출발했다면,
+ * 카메라가 hittable 내부에 위치한다는 뜻이므로,
+ * hittable 안쪽 면(back face)을 렌더링해야 함.
+ *
+ * 반면, ray 가 hittable 외부에서 출발했다면,
+ * 카메라가 hittable 외부에 위치한다는 뜻이므로,
+ * hittable 바깥쪽 면(front face)를 렌더링해야 함.
+ *
+ * 따라서, ray 위치에 따라 hittable 의 렌더링 면을 결정할 수 있게 되는 것임.
+ *
+ *
+ * 또한, 안쪽 면을 쉐이딩하려면 ray - hittable 교차점의 inward normal 이 필요하고,
+ * 바깥쪽 면을 쉐이딩하려면 반대로 outward normal 이 필요함.
+ * 이때, ray - hittable 교차점 normal 과 ray 위치를 관리하는
+ * 2가지 design decision 이 존재함.
+ *
+ *
+ * 1. geometry 단계에서 normal 이 항상 outward 를 향하도록 계산하면,
+ * shading(coloring) 단계에서 ray 와 outward normal 을 내적하여 ray 위치를 파악해야 함.
+ *
+ * 2. 반면, normal 이 항상 ray 의 반대 방향을 향하도록 계산하면,
+ * geometry intersection 단계(= hittable::hit() 함수)에서 ray 위치를 미리 계산해서
+ * hit_record::front_face 상태값에 저장해두고 사용할 수 있음.
+ *
+ *
+ * 두 방식 모두 어차피 교차할 때마다 ray 위치를 파악해야 하므로,
+ * 실질적인 연산량은 동일함.
+ *
+ * 그러나, 이 튜토리얼에서는 만들어야 할 material 클래스들이 아주 많기 때문에,
+ * 여러 개의 material 클래스(= 즉, shading 단계)를 만들 때마다
+ * ray 와 outward 간 내적으로 ray 위치 파악 코드 중복 작성을 피하기 위해,
+ *
+ * geometry intersection 단계에서 ray 위치 파악 코드를 한 번 작성해두고
+ * hit_record::front_face 에 결과값을 저장해버리면,
+ * 여러 material 클래스에서 해당 상태값을 참조해서 front face/back face 렌더링 여부를 결정할 수 있음.
+ *
+ *
+ * 따라서, 코드의 유지 보수 및 가독성을 고려해
+ * 2번 방식으로 normal 과 ray 위치를 관리하도록 함.
+ */
 
 #endif /* HITTABLE_HPP */
