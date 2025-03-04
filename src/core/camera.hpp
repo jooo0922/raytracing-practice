@@ -11,8 +11,46 @@ public:
 
 public:
   // pixel 들을 순회하며 출력 스트림(std::ofstream or std::ostream)에 데이터 출력(= .ppm 이미지 렌더링)
-  void render(std::ostream &output_stream, const hittable &world) {
-    // ...
+  void render(std::ostream &output_stream, const hittable &world)
+  {
+    // 카메라 및 viewport 파라미터 초기화
+    initialize();
+
+    /** 생성된 .ppm 이미지 파일에 데이터 출력 */
+    // .ppm metadata 출력 (https://raytracing.github.io/books/RayTracingInOneWeekend.html > Figure 1 참고)
+    output_stream << "P3\n"
+                  << image_width << ' ' << image_height << "\n255\n";
+
+    /** viewport 각 pixel 들을 통과하는 ray 를 순회하며 world 에 casting 했을 때 계산된 최종 색상값을 .ppm 에 출력 */
+    for (int j = 0; j < image_height; ++j)
+    {
+      /**
+       * .ppm 에 출력할 색상값을 한 줄(row)씩 처리할 때마다 남아있는 줄 수 콘솔 출력
+       * (참고로, fflush(stdout) 는 출력 스트림(stdout)의 버퍼를 비움.)
+       * -> <iostream> 은 버퍼링으로 인해 덮어쓰기가 정상 작동하지 않아 cstdio 함수를 사용하여 출력함.
+       */
+      printf("\rScanlines remaining: %d ", image_height - j);
+      fflush(stdout);
+      for (int i = 0; i < image_width; ++i)
+      {
+        // viewport 각 픽셀 중점의 '3D 공간 상의' 좌표 계산
+        auto pixel_center = pixel00_loc + (i * pixel_delta_u) + (j * pixel_delta_v);
+
+        // 카메라 중점 ~ viewport 각 픽셀 중점까지 향하는 방향벡터 계산
+        auto ray_direction = pixel_center - camera_center;
+
+        // 카메라 ~ viewport 각 픽셀 중점까지 향하는 반직선(ray) 생성
+        ray r(camera_center, ray_direction);
+
+        // 주어진 반직선(ray) r 에 대해 intersection 검사를 수행한 결과 현재 pixel 에 출력할 최종 색상 계산 후 .ppm 파일에 쓰기
+        auto pixel_color = ray_color(r, world);
+        write_color(output_stream, pixel_color);
+      }
+    }
+
+    // .ppm 에 색상값을 다 쓰고나면 완료 메시지 출력
+    printf("\rDone.                       \n");
+    fflush(stdout);
   };
 
 private:
