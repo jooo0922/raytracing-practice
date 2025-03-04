@@ -41,6 +41,14 @@ private:
     // 흰색과 파란색을 [0.0, 1.0] 범위의 a값에 따라 혼합(선형보간)하여 .ppm 에 출력할 색상 계산
     return (1.0f - a) * color(1.0f, 1.0f, 1.0f) + a * color(0.5f, 0.7f, 1.0f);
   };
+
+private:
+  // 카메라 및 viewport 파라미터 멤버변수 정의
+  int image_height;     // .ppm 이미지 높이
+  point3 camera_center; // 3D Scene 상에서 카메라 중점(eye point). viewport 로 casting 되는 모든 ray 의 출발점
+  point3 pixel00_loc;   // 'pixel grid'의 좌상단 픽셀(이미지 좌표 상으로 (0,0)에 해당하는 픽셀)의 '3D Scene 상의' 좌표값 (Figure 4 에서 P(0,0) 으로 표시)
+  vec3 pixel_delta_u;   // pixel grid 의 각 픽셀 사이의 수평 방향 간격
+  vec3 pixel_delta_v;   // pixel grid 의 각 픽셀 사이의 수직 방향 간격
 };
 
 #endif /* CAMERA_HPP */
