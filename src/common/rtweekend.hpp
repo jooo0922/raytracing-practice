@@ -21,6 +21,7 @@ inline double degrees_to_radians(double degrees)
 
 // common
 #include "color.hpp"
+#include "interval.hpp"
 #include "ray.hpp"
 #include "vec3.hpp"
 
