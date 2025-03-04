@@ -6,7 +6,7 @@
 // vec3 에 대한 별칭으로써 color 선언
 using color = vec3;
 
-// .ppm 파일에 색상 데이터를 cout 으로 출력하는 작업을 util 함수로 구현
+// 출력 스트림(std::ofstream or std::ostream)에 .ppm 파일에 저장할 색상값을 출력하는 util 함수
 void write_color(std::ostream &out, color pixel_color)
 {
   // pixel_color 는 요소의 값이 0 ~ 1 사이로 정규화된 vec3 로 생성되어 전달되겠군.
