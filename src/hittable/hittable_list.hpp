@@ -35,16 +35,16 @@ public:
   };
 
   // scene 에 추가된 hittable object 순회하며 ray intersection 검사
-  bool hit(const ray &r, double ray_tmin, double ray_tmax, hit_record &rec) const override
+  bool hit(const ray &r, interval ray_t, hit_record &rec) const override
   {
     hit_record temp_rec;
     bool hit_anything = false;
-    auto closest_so_far = ray_tmax;
+    auto closest_so_far = ray_t.max;
 
     // 등록된 hittable object 를 순회하며 현재 ray 와의 intersection 검사
     for (const auto &object : objects)
     {
-      if (object->hit(r, ray_tmin, closest_so_far, temp_rec))
+      if (object->hit(r, interval(ray_t.min, closest_so_far), temp_rec))
       {
         // 하나라도 교차된 object 가 존재하면 true 반환
         hit_anything = true;

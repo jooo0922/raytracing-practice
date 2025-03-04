@@ -11,7 +11,7 @@ public:
   sphere(point3 _center, double _radius) : center(_center), radius(_radius) {}
 
   // 순수 가상 함수 hit 재정의(override)
-  bool hit(const ray &r, double ray_tmin, double ray_tmax, hit_record &rec) const override
+  bool hit(const ray &r, interval ray_t, hit_record &rec) const override
   {
     // 반직선-구체 교차 여부를 검증하는 판별식 구현 (main.cpp > '근의 공식과 판별식 관련 필기 참고')
     vec3 oc = r.origin() - center;                  // 반직선 출발점 ~ 구체의 중점까지의 벡터 (본문 공식에서 (A-C) 에 해당)
@@ -31,12 +31,12 @@ public:
     // 반직선과 구체의 교차점들 중에서 더 가까운 교차점에 해당하는 반직선 상의 비율값 t 를 먼저 계산
     auto root = (-half_b - sqrtd) / a;
 
-    if (root <= ray_tmin || ray_tmax <= root)
+    if (!ray_t.surrounds(root))
     {
       // 만약, 더 가까운 교차점에 해당하는 반직선 상의 비율값 t 가 반직선의 유효범위를 벗어난다면, 나머지 교차점에 대한 반직선 상의 비율값 t 를 다시 계산함.
       root = (-half_b + sqrtd) / a;
 
-      if (root <= ray_tmin || ray_tmax <= root)
+      if (!ray_t.surrounds(root))
       {
         // 만약, 나머지 교차점에 대한 반직선 상의 비율값 t 조차 반직선 유효범위를 벗어난다면, 교차점이 없는 것으로 판단해서 false 반환하고 함수 종료
         return false;

@@ -29,7 +29,7 @@ public:
   virtual ~hittable() = default;
 
   // 충돌 함수를 순수 가상함수 인터페이스로 정의
-  virtual bool hit(const ray &r, double ray_tmin, double ray_tmax, hit_record &rec) const = 0;
+  virtual bool hit(const ray &r, interval ray_t, hit_record &rec) const = 0;
 };
 
 /*
