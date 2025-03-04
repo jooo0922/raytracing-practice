@@ -1,4 +1,5 @@
 #include "common/rtweekend.hpp" // common header 최상단에 가장 먼저 include (관련 필기 하단 참고)
+#include "core/camera.hpp"
 #include "hittable/hittable.hpp"
 #include "hittable/hittable_list.hpp"
 #include "hittable/sphere.hpp"
