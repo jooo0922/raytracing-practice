@@ -88,6 +88,30 @@ private:
     pixel00_loc = viewport_upper_left + 0.5 * (pixel_delta_u + pixel_delta_v);
   };
 
+  // 카메라 ~ 각 pixel 주변 random sample 까지 향하는 random ray(반직선) 생성 함수 (viewport 상 현재 pixel row(= i), column(= j) 값을 매개변수로 받아서 위치값 계산)
+  ray get_ray(int i, int j) const
+  {
+    /** viewport 각 pixel 을 중심으로 단위 사각형(1*1 size) 범위 내에 존재하는 random sample 계산 */
+
+    // pixel 중점으로부터 띄워줄 단위 사각형 범위 내의 random offset 계산
+    auto offset = sample_square();
+
+    // pixel 중점에서 random offset 만큼 변위된 위치값으로 random sample 계산
+    auto pixel_sample = pixel00_loc + ((i + offset.x()) * pixel_delta_u) + ((j + offset.y()) * pixel_delta_v);
+
+    // 카메라 ~ 각 pixel 주변 random sample 방향벡터 계산
+    auto ray_origin = camera_center;
+    auto ray_direction = pixel_sample - ray_origin;
+
+    return ray(ray_origin, ray_direction);
+  };
+
+  // (-0.5f, -0.5f) ~ (0.5f, 0.5f) 범위 내의 단위 사각형(1*1 size) 안에 존재하는 random point 반환 함수
+  vec3 sample_square() const
+  {
+    return vec3(random_double() - 0.5f, random_double() - 0.5f, 0.0f);
+  };
+
   // 주어진 반직선(ray)을 world 에 casting 하여 계산된 최종 색상값을 반환하는 함수
   color ray_color(const ray &r, const hittable &world)
   {
