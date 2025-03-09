@@ -24,6 +24,20 @@ public:
   // 특정 비율값 t 가 ray 유효 범위 내부에 완전히 포함되는지 확인 (경계선에 걸치는 경우 제외)
   bool surrounds(double x) const { return min < x && x < max; };
 
+  // 특정 값 x 를 유효 범위 내로 clamping
+  double clamp(double x) const
+  {
+    if (x < min)
+    {
+      return min;
+    };
+    if (x > max)
+    {
+      return max;
+    }
+    return x;
+  }
+
 public:
   // 자주 사용하게 될 ray 유효 범위를 정적 멤버변수로 미리 정의 -> 어디서든 쉽게 접근 및 사용 가능.
   static const interval empty;    // ray 비어있는 유효 범위 -> 유효 범위가 없음. 주로 유효 범위의 초기 상태로 사용.
