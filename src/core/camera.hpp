@@ -8,6 +8,7 @@ class camera
 public:
   double aspect_ratio = 1.0f; // .ppm 이미지 종횡비 (기본값 1:1)
   int image_width = 100;      // .ppm 이미지 너비 (기본값 100. 이미지 높이는 너비에 aspect_ratio 를 곱해서 계산.)
+  int samples_per_pixel = 10; // antialiasing 을 위해 사용할 각 pixel 주변 random sample 개수
 
 public:
   // pixel 들을 순회하며 출력 스트림(std::ofstream or std::ostream)에 데이터 출력(= .ppm 이미지 렌더링)
@@ -61,6 +62,9 @@ private:
     image_height = static_cast<int>(image_width / aspect_ratio); // 이미지 높이는 정수형이므로, 너비와 종횡비를 곱한 실수값을 정수형으로 casting.
     image_height = (image_height < 1) ? 1 : image_height;        // 이미지 높이는 항상 1보다는 크도록 함.
 
+    // 색상값 적분 시 사용할 미소 변화량 계산 -> 쉽게 표현하면 누산된 색상값 총합해서 random sample 개수만큼 평균을 내는 것.
+    pixel_samples_scale = 1.0f / samples_per_pixel;
+
     /** 카메라 및 viewport 파라미터 정의 */
     auto focal_length = 1.0;                                                                   // 카메라 중점(eye point)과 viewport 사이의 거리 (현재는 단위 거리 1로 지정함.)
     auto viewport_height = 2.0;                                                                // viewport 높이 정의
@@ -107,11 +111,12 @@ private:
 
 private:
   // 카메라 및 viewport 파라미터 멤버변수 정의
-  int image_height;     // .ppm 이미지 높이
-  point3 camera_center; // 3D Scene 상에서 카메라 중점(eye point). viewport 로 casting 되는 모든 ray 의 출발점
-  point3 pixel00_loc;   // 'pixel grid'의 좌상단 픽셀(이미지 좌표 상으로 (0,0)에 해당하는 픽셀)의 '3D Scene 상의' 좌표값 (Figure 4 에서 P(0,0) 으로 표시)
-  vec3 pixel_delta_u;   // pixel grid 의 각 픽셀 사이의 수평 방향 간격
-  vec3 pixel_delta_v;   // pixel grid 의 각 픽셀 사이의 수직 방향 간격
+  int image_height;           // .ppm 이미지 높이
+  double pixel_samples_scale; // 각 pixel 주변 random sample 을 통과하는 ray 로부터 계산된 색상 적분에 사용할 미소 변화량(속칭 dx) -> used for antialiasing
+  point3 camera_center;       // 3D Scene 상에서 카메라 중점(eye point). viewport 로 casting 되는 모든 ray 의 출발점
+  point3 pixel00_loc;         // 'pixel grid'의 좌상단 픽셀(이미지 좌표 상으로 (0,0)에 해당하는 픽셀)의 '3D Scene 상의' 좌표값 (Figure 4 에서 P(0,0) 으로 표시)
+  vec3 pixel_delta_u;         // pixel grid 의 각 픽셀 사이의 수평 방향 간격
+  vec3 pixel_delta_v;         // pixel grid 의 각 픽셀 사이의 수직 방향 간격
 };
 
 #endif /* CAMERA_HPP */
