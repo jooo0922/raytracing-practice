@@ -35,6 +35,7 @@ int main(int argc, char *argv[])
   // 주요 이미지 파라미터 설정
   cam.image_width = 400;
   cam.aspect_ratio = 16.0f / 9.0f;
+  cam.samples_per_pixel = 10;
 
   // 카메라 및 viewport 파라미터 내부에서 자동 초기화 후 .ppm 이미지 렌더링
   cam.render(output_file, world);
