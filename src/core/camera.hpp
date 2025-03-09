@@ -34,18 +34,21 @@ public:
       fflush(stdout);
       for (int i = 0; i < image_width; ++i)
       {
-        // viewport 각 픽셀 중점의 '3D 공간 상의' 좌표 계산
-        auto pixel_center = pixel00_loc + (i * pixel_delta_u) + (j * pixel_delta_v);
+        // 현재 pixel 주변 random sample 을 통과하는 ray 로부터 계산된 색상값들을 누산할 변수 초기화
+        color pixel_color(0.0f, 0.0f, 0.0f);
 
-        // 카메라 중점 ~ viewport 각 픽셀 중점까지 향하는 방향벡터 계산
-        auto ray_direction = pixel_center - camera_center;
+        // random sample 개수만큼 반복문을 돌려서 색상값 누산
+        for (int sample = 0; sample < samples_per_pixel; sample++)
+        {
+          // 카메라 ~ 각 pixel 주변 random sample 까지 향하는 random ray(반직선) 생성
+          ray r = get_ray(i, j);
 
-        // 카메라 ~ viewport 각 픽셀 중점까지 향하는 반직선(ray) 생성
-        ray r(camera_center, ray_direction);
+          // 현재 pixel 주변 random sample 을 통과하는 ray 로부터 얻어진 색상값 누산
+          pixel_color += ray_color(r, world);
+        }
 
-        // 주어진 반직선(ray) r 에 대해 intersection 검사를 수행한 결과 현재 pixel 에 출력할 최종 색상 계산 후 .ppm 파일에 쓰기
-        auto pixel_color = ray_color(r, world);
-        write_color(output_stream, pixel_color);
+        // 누산된 색상값에 미소 변화량을 곱해(= random sample 개수만큼 평균을 내서) 최종 색상 계산 후 .ppm 파일에 쓰기 -> antialiasing 이 적용된 색상값 출력 가능
+        write_color(output_stream, pixel_samples_scale * pixel_color);
       }
     }
 
