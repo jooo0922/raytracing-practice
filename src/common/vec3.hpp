@@ -144,6 +144,21 @@ inline vec3 unit_vector(vec3 v)
   return v / v.length();
 }
 
+// 단위 원(unit sphere. 반지름 1) 표면 상의 랜덤 방향벡터 연산 (rejection method 기반)
+inline vec3 random_unit_vector()
+{
+  while (true)
+  {
+    auto p = vec3::random(-1, 1);
+    auto lensq = p.length_squared();
+    // 생성된 방향벡터의 길이가 10의 -160 제곱보다 작은 경우에도 reject 한다. (하단 필기 참고)
+    if (1e-160 < lensq && lensq <= 1)
+    {
+      return p / sqrt(lensq);
+    }
+  }
+}
+
 /**
  * inline 키워드
  *
@@ -169,6 +184,38 @@ inline vec3 unit_vector(vec3 v)
  *
  * vec3 v(1.0, 2.0, 3.0);
  * std::cout << v; // 1.0 2.0 3.0 와 같이 출력
+ */
+
+/**
+ * rejection method
+ *
+ *
+ * random_unit_vector() 함수에서 단위 원 표면 상 랜덤 방향벡터 계산 시,
+ * 아래와 같은 절차를 따름.
+ *
+ * 1. 단위 원 내의 랜덤 방향벡터를 생성한다.
+ * 2. 이 방향벡터를 단위 원 표면까지 닿도록(= 단위 원 반지름 1과 길이를 맞추도록) 정규화한다.
+ *
+ * 이때, 1번 단계에서 단위 원을 벗어나는 방향벡터가 생성되었을 경우,
+ * 해당 sample 은 reject 하고, 조건을 만족하는 방향벡터가 생성될 때까지 반복문을 계속 순회함.
+ * -> 이것이 rejection method
+ */
+
+/**
+ * 방향벡터의 길이를 1e-160(10의 -160제곱) 이상으로 제한한 이유
+ *
+ *
+ * 단위 원 내의 랜덤 방향벡터의 길이가 0에 가까울 정도로 너무 작을 경우,
+ * 너무 작은 소수점 길이를 제곱한 lensq 값은
+ * double 타입이 부동소수점 정밀도로 표현 가능한 크기(= 1e-160)보다 작아질 확률이 있음.
+ *
+ * 이럴 경우 길이 제곱값 lensq 가 부동소수점 정밀도 한계로 인해 0 으로 underflow 됨.
+ *
+ * 따라서, p / sqrt(lensq) 는 분모가 0인 나눗셈이 되어버리고,
+ * 이는 각 컴포넌트가 무한대인 bogus vector(= invalid vector) 로 계산됨.
+ *
+ * 이를 방지하기 위해 double 타입으로 저장 가능한 가장 작은 값인
+ * 1e-160 보다 길이 제곱값이 작은 sample 도 rejection 하는 것!
  */
 
 #endif /* VEC3_HPP */
