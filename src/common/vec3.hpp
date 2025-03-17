@@ -159,6 +159,26 @@ inline vec3 random_unit_vector()
   }
 }
 
+// 반구 영역 표면 상의 랜덤 방향벡터 연산
+inline vec3 random_on_hemisphere(const vec3 &normal)
+{
+  // 단위 원 표면 상의 랜덤 방향벡터 계산
+  vec3 on_unit_sphere = random_unit_vector();
+
+  // 단위 원 랜덤 방향벡터와 반구의 방향벡터(normal) 간 내적값을 기준으로 반구 영역 내 포함 여부 판단
+  if (dot(on_unit_sphere, normal) > 0.0f)
+  {
+    // 내적값이 0.0f 보다 크면, 두 벡터의 사잇각이 90도 보다 작으므로, 랜덤 방향벡터는 반구 영역 내에 위치함.
+    return on_unit_sphere;
+  }
+  else
+  {
+    // 내적값이 0.0f 보다 작으면,두 벡터의 사잇각이 90도 보다 크므로, 랜덤 방향벡터는 반구 영역을 벗어남.
+    // -> 방향벡터를 뒤집어서 반구 영역 내에 위치하도록 교정함.
+    return -on_unit_sphere;
+  }
+}
+
 /**
  * inline 키워드
  *
