@@ -65,6 +65,17 @@ public:
   {
     return e[0] * e[0] + e[1] * e[1] + e[2] * e[2];
   }
+
+  // 랜덤한 방향벡터 계산하는 static 멤버 함수들 정의
+  static vec3 random()
+  {
+    return vec3(random_double(), random_double(), random_double());
+  }
+
+  static vec3 random(double min, double max)
+  {
+    return vec3(random_double(min, max), random_double(min, max), random_double(min, max));
+  }
 };
 
 // vec3 에 대한 별칭으로써 point3 선언
