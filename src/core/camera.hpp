@@ -9,6 +9,7 @@ public:
   double aspect_ratio = 1.0f; // .ppm 이미지 종횡비 (기본값 1:1)
   int image_width = 100;      // .ppm 이미지 너비 (기본값 100. 이미지 높이는 너비에 aspect_ratio 를 곱해서 계산.)
   int samples_per_pixel = 10; // antialiasing 을 위해 사용할 각 pixel 주변 random sample 개수
+  int max_depth = 10;         // ray bouncing 최대 횟수 (= 각 ray 마다 최대 재귀 순회 깊이 제한)
 
 public:
   // pixel 들을 순회하며 출력 스트림(std::ofstream or std::ostream)에 데이터 출력(= .ppm 이미지 렌더링)
@@ -44,7 +45,7 @@ public:
           ray r = get_ray(i, j);
 
           // 현재 pixel 주변 random sample 을 통과하는 ray 로부터 얻어진 색상값 누산
-          pixel_color += ray_color(r, world);
+          pixel_color += ray_color(r, max_depth, world);
         }
 
         // 누산된 색상값에 미소 변화량을 곱해(= random sample 개수만큼 평균을 내서) 최종 색상 계산 후 .ppm 파일에 쓰기 -> antialiasing 이 적용된 색상값 출력 가능
@@ -116,8 +117,14 @@ private:
   };
 
   // 주어진 반직선(ray)을 world 에 casting 하여 계산된 최종 색상값을 반환하는 함수
-  color ray_color(const ray &r, const hittable &world)
+  color ray_color(const ray &r, int depth, const hittable &world)
   {
+    // ray 가 최대 재귀 순회 깊이(= max_depth)만큼 진행되었다면 재귀 순회 종료 (하단 필기 참고)
+    if (depth <= 0)
+    {
+      return color(0.0f, 0.0f, 0.0f);
+    }
+
     // world 에 추가된 hittable objects 들을 순회하며 현재 ray 와 교차 검사 수행
     hit_record rec;
     if (world.hit(r, interval(0, infinity), rec))
@@ -127,7 +134,7 @@ private:
       vec3 direction = random_on_hemisphere(rec.normal);
       // 랜덤 방향벡터로 ray 를 recursive 하게 진행시켰을 때 반사된 빛(색상)을 반환받아 처리함.
       // -> 아직 material 인터페이스 구현 전이므로, 들어온 빛의 50%(= 0.5) 만 반사하고 나머지는 흡수하는 기초적인 diffuse 연산 처리
-      return 0.5f * ray_color(ray(rec.p, direction), world);
+      return 0.5f * ray_color(ray(rec.p, direction), depth - 1, world);
     }
 
     // 반직선을 길이가 1인 단위 벡터로 정규화
@@ -166,6 +173,23 @@ private:
  *
  * -> ray tracing 알고리즘의 핵심은 광선(ray)의 진행 방향을
  * 따라 재귀적으로(scene traversal) 최종 조명값 계산하는 것!
+ */
+
+/**
+ * max_depth
+ *
+ *
+ * ray 가 scene 객체들과 끊임없이 충돌하다 보면 렌더링 성능이 급격히 저하되고,
+ * 재귀 호출이 과도하게 깊어져서 재귀 스택이 가득차서 overflow 가 발생할 수 있음.
+ *
+ * 이를 방지하기 위해, ray 가 최대 재귀 순회 깊이(= max_depth)만큼 진행되었음에도
+ * 계속 scene 객체들과 충돌한다면, 해당 pixel 지점 최종 색상값에
+ * 기여도가 없는 영벡터 색상을 반환하고 재귀를 종료함.
+ *
+ * (-> 이렇게 반환된 영벡터들이 나중에 ray tracing 결과물 noise 에 영향을 줌.)
+ *
+ * 그래서 ray_color() 를 재귀 호출할 때마다 현재 depth 값을 추적할 수 있도록
+ * 두 번째 인자에 현재 재귀 depth - 1 만큼 decrement 해서 전달함.
  */
 
 #endif /* CAMERA_HPP */
