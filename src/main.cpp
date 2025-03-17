@@ -36,6 +36,7 @@ int main(int argc, char *argv[])
   cam.image_width = 400;
   cam.aspect_ratio = 16.0f / 9.0f;
   cam.samples_per_pixel = 10;
+  cam.max_depth = 20;
 
   // 카메라 및 viewport 파라미터 내부에서 자동 초기화 후 .ppm 이미지 렌더링
   cam.render(output_file, world);
