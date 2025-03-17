@@ -123,8 +123,11 @@ private:
     if (world.hit(r, interval(0, infinity), rec))
     {
       // 하나라도 충돌한 hittable object 가 존재한다면, rec 변수에는 현재 ray 방향에서 카메라로부터 가장 가까운 교차점의 충돌 정보가 기록됨.
-      // -> 카메라에서 가장 가까운 교차점의 노멀벡터([-1.0, 1.0] 범위)를 [0.0, 1.0] 범위의 색상값으로 맵핑
-      return 0.5f * (rec.normal + color(1.0f, 1.0f, 1.0f));
+      // 충돌 지점 p 의 normal vector 중심의 반구 영역 내 랜덤 방향벡터 생성
+      vec3 direction = random_on_hemisphere(rec.normal);
+      // 랜덤 방향벡터로 ray 를 recursive 하게 진행시켰을 때 반사된 빛(색상)을 반환받아 처리함.
+      // -> 아직 material 인터페이스 구현 전이므로, 들어온 빛의 50%(= 0.5) 만 반사하고 나머지는 흡수하는 기초적인 diffuse 연산 처리
+      return 0.5f * ray_color(ray(rec.p, direction), world);
     }
 
     // 반직선을 길이가 1인 단위 벡터로 정규화
@@ -145,5 +148,24 @@ private:
   vec3 pixel_delta_u;         // pixel grid 의 각 픽셀 사이의 수평 방향 간격
   vec3 pixel_delta_v;         // pixel grid 의 각 픽셀 사이의 수직 방향 간격
 };
+
+/**
+ * ray tracing 의 가장 기본 원리!
+ *
+ *
+ * camera::ray_color() 함수처럼
+ * ray 충돌 지점의 normal vector 를 중심으로 하는 반구 영역 내 랜덤 방향벡터를
+ * ray 의 다음 진행 방향으로 결정함.
+ *
+ * 해당 진행 방향으로 recursive 하게 ray 를 쐈을 때,
+ * 반사되어 돌아오는 색상값에 대해 여러 material property 및 렌더링 방정식에 따라
+ * 다시 반사시킬 조명값을 계산함.
+ *
+ * 이렇게 계산된 빛을 현재 자신의 재귀순회 호출자(= caller. 재귀 부모)에게
+ * 다시 반환함으로써, 각 카메라 pixel 로 들어오는 최종 조명값을 계산하는 것임.
+ *
+ * -> ray tracing 알고리즘의 핵심은 광선(ray)의 진행 방향을
+ * 따라 재귀적으로(scene traversal) 최종 조명값 계산하는 것!
+ */
 
 #endif /* CAMERA_HPP */
