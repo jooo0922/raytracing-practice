@@ -133,7 +133,10 @@ private:
     {
       // 하나라도 충돌한 hittable object 가 존재한다면, rec 변수에는 현재 ray 방향에서 카메라로부터 가장 가까운 교차점의 충돌 정보가 기록됨.
       // 충돌 지점 p 의 normal vector 중심의 반구 영역 내 랜덤 방향벡터 생성
-      vec3 direction = random_on_hemisphere(rec.normal);
+      // vec3 direction = random_on_hemisphere(rec.normal);
+
+      // Lambertian distribution 에 더 부합하는 ray 방향벡터 계산 (하단 필기 참고)
+      vec3 direction = rec.normal + random_unit_vector();
       // 랜덤 방향벡터로 ray 를 recursive 하게 진행시켰을 때 반사된 빛(색상)을 반환받아 처리함.
       // -> 아직 material 인터페이스 구현 전이므로, 들어온 빛의 50%(= 0.5) 만 반사하고 나머지는 흡수하는 기초적인 diffuse 연산 처리
       return 0.5f * ray_color(ray(rec.p, direction), depth - 1, world);
@@ -213,6 +216,51 @@ private:
  *
  * 이를 해결하기 위해, 유효한 ray 충돌 범위를 0.001 이상으로 보고,
  * 그 이하는 표면 아래에서 충돌한 잘못된 ray 충돌로 판정하여 조명 감쇄를 발생시키지 않는 것임
+ */
+
+/**
+ * Lambertian distribution
+ *
+ *
+ * 기존 random_on_hemisphere() 함수를 기반으로 ray 방향벡터를 생성하는 방식은
+ * 충돌한 표면에 접하는 반구 영역 내에서 랜덤한 방향으로 uniform 하게 ray 를 산란시킴.
+ * -> 렌더링 결과가 부드러워 보이지만, 물리적으로 비사실적 렌더링임.
+ *
+ * 반면, 실제 diffuse object(난반사 물체)는 Lambertian distribution 을 따르는데,
+ * 조명 벡터가 충돌한 표면 지점에서 산란되는 대부분의 ray 가 표면의 normal vector 와 가깝게 산란되어야 함.
+ * -> 이러한 ray 산란 분포는 물리적으로 더 정확한 diffuse reflectance 을 구현함.
+ *
+ * 이러한 Lambertian 모델은 기존 그래픽스 파이프라인에서는 '빛의 세기' 관점에서 구현됨.
+ * 즉, 프래그먼트 쉐이더 내에서 조명 벡터와 표면의 normal vector 간 내적(dot())을 통해
+ * cos 값을 구하게 되고, 이 cos 값을 기반으로 해당 표면에서 반사되는 '빛의 세기' 를 결정함으로써
+ * Lambertian 모델을 구현한다면,
+ *
+ * Ray Tracing 에서는 조명을 recursive ray bouncing 기반으로 계산하게 되므로,
+ * 충돌한 표면에서 다음 ray 의 방향을 생성할 때, 표면의 normal vector 에 가까운 방향일수록
+ * 확률적으로 더 많은 ray 를 생성시키고, 먼 방향일수록 확률적으로 더 적은 ray 를 생성시키는
+ * 'ray 산란 확률 분포' 관점에서 Lambertian 모델이 구현된 것임.
+ *
+ * 즉, 물리적으로 동일한 모델(Lambertian)을 그래픽스 파이프라인의 특성에 따라
+ * 서로 다른 방식으로 구현한 것으로 보면 됨.
+ *
+ * -> 그래서 실제로 본문에서도 Lambertian 산란 분포는 '조명 벡터와 충돌 표면의 normal vector 간
+ * 사잇각의 cos 값에 비례한 분포로 산란된다(~ scatters reflected rays in a manner that is proportional to cos(), ~)'
+ * 라고 설명하고 있음. 즉, 두 방식은 본질적으로 동일한 물리 조명 모델을 서로 다른 방식으로 구현하고 있는 것 뿐임!
+ *
+ *
+ * 이때, 충돌 표면의 normal vector 에 더 가까운 ray 를 확률적으로 많이 생성해내는 방법이
+ *
+ * vec3 direction = rec.normal + random_unit_vector();
+ *
+ * 즉, '충돌 표면의 normal vector + 충돌 표면 바깥 쪽에 접하는 unit sphere 내의 랜덤 방향벡터' 인 것임!
+ *
+ * 충돌 표면 바깥쪽 unit sphere 내의 랜덤 방향벡터가 어떤 방향이든 간에,
+ * 해당 방향벡터에 충돌 표면 normal vector 를 더하면, 벡터의 합의 성질에 의해
+ * 해당 랜덤 방향벡터가 충돌 표면 normal vector 쪽으로 끌려가게 됨.
+ *
+ * 이렇게 생성된 ray 방향은 충돌 표면 normal vector 쪽으로 가까워질 수밖에 없고,
+ * 결과적으로 생성된 ray 들을 보면 전체적으로 normal vector 에 가까운 쪽에 더 많은
+ * ray 가 생성된 것처럼 보이는 분포를 보이게 됨.
  */
 
 #endif /* CAMERA_HPP */
