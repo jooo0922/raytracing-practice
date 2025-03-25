@@ -8,7 +8,9 @@
 using color = vec3;
 
 // 출력 스트림에 저장할 색상의 색 공간을 linear space -> gamma space 로 변환
-// gamma correction 관련 https://github.com/jooo0922/opengl-study/blob/main/AdvancedLighting/Gamma_Correction/MyShaders/gamma_correction.fs 참고
+// gamma correction 관련 아래 두 링크 참고
+// https://github.com/jooo0922/opengl-study/blob/main/AdvancedLighting/Gamma_Correction/MyShaders/gamma_correction.fs
+// https://learnopengl.com/Advanced-Lighting/Gamma-Correction
 inline double linear_to_gamma(double linear_component)
 {
   // linear space 색상 컴포넌트가 음수이면 제곱근이 허수 -> 색상값이 허수가 되면 안되므로 음수 컴포넌트는 0으로 clamping
