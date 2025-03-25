@@ -66,6 +66,16 @@ public:
     return e[0] * e[0] + e[1] * e[1] + e[2] * e[2];
   }
 
+  // 현재 벡터의 영벡터 여부 검사 함수
+  bool near_zero() const
+  {
+    // 현재 벡터의 각 컴포넌트가 0인지 판단할 epsilon 값 정의
+    auto s = 1e-8;
+
+    // 현재 벡터의 각 컴포넌트의 절댓값이 epsilon 보다 작으면 0으로 판정
+    return (std::fabs(e[0]) < s) && (std::fabs(e[1] < s)) && (std::fabs(e[2]) < s);
+  };
+
   // 랜덤한 방향벡터 계산하는 static 멤버 함수들 정의
   static vec3 random()
   {
