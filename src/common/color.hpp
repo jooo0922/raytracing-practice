@@ -7,6 +7,19 @@
 // vec3 에 대한 별칭으로써 color 선언
 using color = vec3;
 
+// 출력 스트림에 저장할 색상의 색 공간을 linear space -> gamma space 로 변환
+// gamma correction 관련 https://github.com/jooo0922/opengl-study/blob/main/AdvancedLighting/Gamma_Correction/MyShaders/gamma_correction.fs 참고
+inline double linear_to_gamma(double linear_component)
+{
+  // linear space 색상 컴포넌트가 음수이면 제곱근이 허수 -> 색상값이 허수가 되면 안되므로 음수 컴포넌트는 0으로 clamping
+  if (linear_component > 0.0f)
+  {
+    // CRT 모니터의 gamma 2.2f 의 근사치 2.0f 으로 가정하고, 그 역수 1.0f / 2.0f 만큼 거듭제곱하여 gamma correction 처리 (std::pow(a, 1.0f / 2.0f) == std::sqrt(a))
+    return std::sqrt(linear_component);
+  }
+  return 0.0f;
+};
+
 // 출력 스트림(std::ofstream or std::ostream)에 .ppm 파일에 저장할 색상값을 출력하는 util 함수
 void write_color(std::ostream &out, const color &pixel_color)
 {
@@ -20,6 +33,11 @@ void write_color(std::ostream &out, const color &pixel_color)
   auto r = pixel_color.x();
   auto g = pixel_color.y();
   auto b = pixel_color.z();
+
+  // 출력할 색상값을 linear space -> gamma space 로 변환하여 gamma correction 처리
+  r = linear_to_gamma(r);
+  g = linear_to_gamma(g);
+  b = linear_to_gamma(b);
 
   // 적분된 색상값을 256개의 정수형 범위([0, 255])로 맵핑할 수 있도록 [0.0, 0.999] 사이로 clamping
   static const interval intensity(0.000f, 0.999f);
