@@ -1,14 +1,25 @@
 #ifndef HITTABLE_HPP
 #define HITTABLE_HPP
 
+#include "common/rtweekend.hpp"
+
+/**
+ * hit_record 클래스에 material 포인터 멤버변수를 정의해야 하는데,
+ * 이 헤더 파일에 material.hpp 포함 시, 순환 참조(circularity of the references) 발생함.
+ *
+ * 따라서, material 클래스를 전방선언하여 순환 참조를 방지함.
+ */
+class material;
+
 // hit_record(충돌 정보) 클래스 정의
 class hit_record
 {
 public:
-  point3 p;        // 반직선과 충돌한 지점의 좌표값
-  vec3 normal;     // 반직선과 충돌한 지점의 노멀벡터
-  double t;        // 반직선 상에서 충돌한 지점이 위치한 비율값 t
-  bool front_face; // 반직선이 hittable 외부/내부에 위치하는지 여부 (관련 필기 하단 참고)
+  point3 p;                      // 반직선과 충돌한 지점의 좌표값
+  vec3 normal;                   // 반직선과 충돌한 지점의 노멀벡터
+  std::shared_ptr<material> mat; // 반직선과 충돌한 object 지점의 산란 계산 시 적용할 material 을 가리키는 포인터
+  double t;                      // 반직선 상에서 충돌한 지점이 위치한 비율값 t
+  bool front_face;               // 반직선이 hittable 외부/내부에 위치하는지 여부 (관련 필기 하단 참고)
 
   // ray - hittable 교차점 normal 및 ray 위치 계산 함수 (입력 매개변수 outward_normal 은 항상 단위 벡터로 정규화된다고 가정)
   // 참고로, geometry 특성을 잘 파악하고 있다면, 외부 geometry code(ex> sphere::hit())에서 각 지점의 정규화된 벡터를 미리 계산해서 넘겨주는 게 더 효율적임.
