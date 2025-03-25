@@ -1,5 +1,6 @@
 #include "common/rtweekend.hpp" // common header 최상단에 가장 먼저 include (관련 필기 하단 참고)
 #include "core/camera.hpp"
+#include "core/material.hpp"
 #include "hittable/hittable.hpp"
 #include "hittable/hittable_list.hpp"
 #include "hittable/sphere.hpp"
@@ -24,10 +25,14 @@ int main(int argc, char *argv[])
     return 1;
   }
 
+  /** 각 Hittable 객체에 적용할 재질(Material)을 shared_ptr로 생성하여 공유 가능하도록 관리 */
+  auto material_ground = std::make_shared<lambertian>(color(0.8f, 0.8f, 0.0f));
+  auto material_center = std::make_shared<lambertian>(color(0.1f, 0.2f, 0.5f));
+
   /** world(scene) 역할을 수행하는 hittable_list 생성 및 hittable object 추가 */
   hittable_list world;
-  world.add(std::make_shared<sphere>(point3(0.0f, 0.0f, -1.0f), 0.5f));      // 반지름이 0.5 인 sphere 추가
-  world.add(std::make_shared<sphere>(point3(0.0f, -100.5f, -1.0f), 100.0f)); // 반지름이 100 인 sphere 추가
+  world.add(std::make_shared<sphere>(point3(0.0f, 0.0f, -1.0f), 0.5f, material_center));      // 반지름이 0.5 인 sphere 추가
+  world.add(std::make_shared<sphere>(point3(0.0f, -100.5f, -1.0f), 100.0f, material_ground)); // 반지름이 100 인 sphere 추가
 
   /** camera 객체 생성 및 이미지 렌더링 수행 */
   camera cam;
