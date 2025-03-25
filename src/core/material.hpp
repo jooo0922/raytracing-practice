@@ -31,6 +31,13 @@ public:
   {
     // Lambertian distribution 기반 scattered_ray 계산 (하단 Lambertian distribution 필기 참고)
     vec3 scatter_direction = rec.normal + random_unit_vector();
+
+    // 산란할 ray 방향이 영벡터가 되지 않도록 예외 처리 (하단 필기 참고)
+    if (scatter_direction.near_zero())
+    {
+      scatter_direction = rec.normal;
+    }
+
     scattered = ray(rec.p, scatter_direction);
 
     // 입자에 흡수(감쇄)되고 남은 난반사(albedo)를 충돌한 ray 산란(반사)될 때의 attenuation 값으로 할당.
@@ -135,6 +142,20 @@ private:
  * 이때, 2번 방법과의 차이점은 일정 확률로 산란할 ray 생성 시, 해당 ray 의 세기를 (albedo / p) 만큼 감쇄시킴.
  * ray 생성 확률도 제한하고 감쇄도 적용한다는 점에서 1번과 2번 방법의 조합(= mixture of both those strategies)
  * 으로 볼 수도 있음.
+ */
+
+/**
+ * 산란할 ray 방향이 영벡터 예외 처리
+ *
+ *
+ * 충돌 표면 바깥 쪽 unit sphere 내 랜덤 벡터의 방향이 충돌 지점 normal vector 와 반대 방향이라면?
+ * 두 벡터를 더해서 계산하면 영벡터가 나올 것임.
+ *
+ * 그런데, 산란할 ray 방향이 영벡터가 되면
+ * 해당 벡터를 정규화하는 등의 과정에서 bogus vector 생성할 수도 있고,
+ * 이후 충돌 계산에서 여러 문제가 발생할 수 있음.
+ *
+ * 이같은 영벡터에 의한 문제들을 방지하기 위한 예외 처리 필수!
  */
 
 #endif /* MATERIAL_HPP */
