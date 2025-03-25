@@ -113,4 +113,28 @@ private:
  * ray 가 생성된 것처럼 보이는 분포를 보이게 됨.
  */
 
+/**
+ * Lambertian reflectance scattering modeling 방식
+ *
+ *
+ * 원문에서 Lambertian reflectance 의 산란 동작을 구현하는 3가지 방법을 제시하고 있음.
+ *
+ * 1.
+ * 표면에 ray 가 충돌할 때마다 항상 산란 방향을 계산하되,
+ * 반사율 R(= 여기서는 Material 에 저장된 albedo)만큼 해당
+ * 방향으로 산란된 빛의 세기를 감쇄시키는 방법. 가장 구현이 간단하고 용이함.
+ * -> 현재 lambertian::scatter() 함수에 구현된 방법
+ *
+ * 2.
+ * 표면에 ray 가 충돌할 때, 애초부터 산란 방향을 생성하는 확률을 제한함.
+ * 그래서 albedo 를 사용한 감쇄를 처리하지 않더라도, 반사(산란)되는 ray 의 확률을
+ * (1 - 반사율 R) 만큼으로 제한하여 처음부터 산란되는 ray 수를 줄여서 빛의 감쇄를 구현.
+ *
+ * 3.
+ * 표면에 ray 가 충돌할 때, 고정된 산란 확률 p(= some fixed probability p)만큼 생성을 제한함.
+ * 이때, 2번 방법과의 차이점은 일정 확률로 산란할 ray 생성 시, 해당 ray 의 세기를 (albedo / p) 만큼 감쇄시킴.
+ * ray 생성 확률도 제한하고 감쇄도 적용한다는 점에서 1번과 2번 방법의 조합(= mixture of both those strategies)
+ * 으로 볼 수도 있음.
+ */
+
 #endif /* MATERIAL_HPP */
