@@ -49,6 +49,7 @@ public:
     rec.p = r.at(rec.t);                             // 충돌 지점의 좌표값 계산
     vec3 outward_normal = (rec.p - center) / radius; // 구체 표면 상에서 충돌 지점의 정규화된 normal 계산
     rec.set_face_normal(r, outward_normal);          // ray 위치와 그에 따른 충돌 지점의 normal 재계산
+    rec.mat = mat;                                   // ray 충돌 지점에서 산란 계산 시 적용할 material 포인터 복사
 
     // 반직선 유효범위 내의 비율값 t가 존재한다면, 구체와 반직선의 충돌 지점이 존재하는 것으로 판단하여 true 반환
     return true;
@@ -56,8 +57,9 @@ public:
 
 private:
   // 구체를 정의하는 데이터를 private 멤버변수로 정의
-  point3 center; // 구체의 중심점 좌표 멤버변수
-  double radius; // 구체의 반지름 멤버변수
+  point3 center;                 // 구체의 중심점 좌표 멤버변수
+  double radius;                 // 구체의 반지름 멤버변수
+  std::shared_ptr<material> mat; // 구체에 충돌한 ray 의 산란 계산 시 적용할 material 포인터 멤버변수(reference counting 기반 smart pointer 로 객체 수명 관리)
 };
 
 #endif /* SPHERE_HPP */
