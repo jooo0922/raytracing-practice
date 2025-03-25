@@ -8,7 +8,7 @@ class sphere : public hittable
 {
 public:
   // 구체의 중점 좌표와 반지름을 매개변수로 받는 생성자 정의
-  sphere(point3 _center, double _radius) : center(_center), radius(_radius) {}
+  sphere(point3 _center, double _radius, std::shared_ptr<material> _mat) : center(_center), radius(_radius), mat(_mat) {}
 
   // 순수 가상 함수 hit 재정의(override)
   bool hit(const ray &r, interval ray_t, hit_record &rec) const override
