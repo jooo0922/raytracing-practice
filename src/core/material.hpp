@@ -40,11 +40,37 @@ public:
 
     scattered = ray(rec.p, scatter_direction);
 
-    // 입자에 흡수(감쇄)되고 남은 난반사(albedo)를 충돌한 ray 산란(반사)될 때의 attenuation 값으로 할당.
+    // metal 재질에서의 albedo 는 감쇄된 난반사 색상이 아닌, 파장마다 반사율 차이로 인한 정반사(specular reflection)의 색조(tint)로 봐야 함.
     attenuation = albedo;
 
     // (일정 확률로)산란할 ray 생성에 성공했다면 true 반환
     // TODO : 추후 일정 확률로 ray 를 산란하지 않고 모두 흡수해버리는 코드도 추가될 수 있음.
+    return true;
+  };
+
+private:
+  color albedo; // 난반사되는 물체의 색상값
+};
+
+/**
+ * Metallic reflectance 산란 동작을 재정의하는 material 클래스 정의
+ */
+class metal : public material
+{
+public:
+  metal(const color &albedo) : albedo(albedo) {};
+
+  // Metallic reflectance 산란 동작 재정의
+  bool scatter(const ray &r_in, const hit_record &rec, color &attenuation, ray &scattered) const override
+  {
+    // metallic 표면에 충돌한 incident ray 의 반사벡터 계산 (하단 필기 참고)
+    vec3 reflected = reflect(r_in.direction(), rec.normal);
+    scattered = ray(rec.p, reflected);
+
+    // 입자에 흡수(감쇄)되고 남은 난반사(albedo)를 충돌한 ray 산란(반사)될 때의 attenuation 값으로 할당.
+    attenuation = albedo;
+
+    // (일정 확률로)산란할 ray 생성에 성공했다면 true 반환
     return true;
   };
 
@@ -156,6 +182,18 @@ private:
  * 이 외에도 충돌 계산에서 여러 문제가 발생할 수 있음.
  *
  * 이같은 영벡터에 의한 문제들을 방지하기 위한 예외 처리 필수!
+ */
+
+/**
+ * Metallic reflectance
+ *
+ *
+ * 이론적으로 metal(금속)은 굴절된 빛을 모두 흡수하기 때문에,
+ * 굴절된 빛이 표면 밖으로 탈출하는 난반사(diffuse reflection)가 존재하지 않음.
+ *
+ * 따라서, metal 재질 표면에서 충돌한 ray 의 다음 진행 방향을 계산하려면,
+ * 해당 표면의 normal vector 방향을 기준으로 (굴절 없이)곧바로 반사되는 '정반사(specular reflection)'만을
+ * 고려하여 ray 의 다음 진행 방향을 결정하도록 산란 방식을 정의한 것임.
  */
 
 #endif /* MATERIAL_HPP */
