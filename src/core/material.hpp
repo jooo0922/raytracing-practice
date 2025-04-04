@@ -58,24 +58,34 @@ private:
 class metal : public material
 {
 public:
-  metal(const color &albedo) : albedo(albedo) {};
+  metal(const color &albedo, double fuzz) : albedo(albedo), fuzz(fuzz < 1.0f ? fuzz : 1.0f) {};
 
   // Metallic reflectance 산란 동작 재정의
   bool scatter(const ray &r_in, const hit_record &rec, color &attenuation, ray &scattered) const override
   {
     // metallic 표면에 충돌한 incident ray 의 반사벡터 계산 (하단 필기 참고)
     vec3 reflected = reflect(r_in.direction(), rec.normal);
+    // 반사벡터의 end point 를 중점으로 하는 퍼짐 구(= fuzz sphere) 상의 임의의 점으로 반사벡터의 end point 업데이트 -> 반사벡터를 약간씩 randomize 함 (하단 필기 참고)
+    // (이때, 반사벡터 길이에 따라 퍼짐 구(= fuzz sphere) 상의 random vector 와 벡터의 합 결과가 달라지므로, 일관된 효과 보장을 위해 반사벡터의 길이를 정규화해야 함.)
+    reflected = unit_vector(reflected) + (fuzz * random_unit_vector());
     scattered = ray(rec.p, reflected);
 
     // 입자에 흡수(감쇄)되고 남은 난반사(albedo)를 충돌한 ray 산란(반사)될 때의 attenuation 값으로 할당.
     attenuation = albedo;
 
-    // (일정 확률로)산란할 ray 생성에 성공했다면 true 반환
-    return true;
+    /**
+     * 퍼짐 구가 너무 크거나, incident ray 가 표면과 거의 평행하게 스치듯이(= grazing ray) 들어오면,
+     * randomize 된 반사 벡터가 표면 아래로 진행될 수 있음.
+     *
+     * -> 이럴 경우, 표면(정확히는 금속 표면 상 비금속 이물질)이 광선을 흡수한 것으로 판단해서
+     * false 를 return 하도록 함.
+     */
+    return (dot(scattered.direction(), rec.normal) > 0);
   };
 
 private:
   color albedo; // 난반사되는 물체의 색상값
+  double fuzz;  // 금속의 specular reflection 을 randomize 하기 위한 퍼짐 구(= fuzz sphere) 반지름
 };
 
 /**
@@ -194,6 +204,22 @@ private:
  * 따라서, metal 재질 표면에서 충돌한 ray 의 다음 진행 방향을 계산하려면,
  * 해당 표면의 normal vector 방향을 기준으로 (굴절 없이)곧바로 반사되는 '정반사(specular reflection)'만을
  * 고려하여 ray 의 다음 진행 방향을 결정하도록 산란 방식을 정의한 것임.
+ *
+ *
+ * Fuzziness
+ *
+ *
+ * 이론적으로 metal(금속)은 난반사가 없기는 하지만,
+ * 현실에서는 실제 금속 표면 위에 먼지, 스크래치, 산화막 등의 비금속 이물질로 인해
+ * 아주 약간의 난반사가 발생하거나 미세하게 흩어질 수 있음.
+ *
+ * metal 클래스에 구현된 fuzz 파라미터는
+ * 이처럼 실제 금속 표면 위의 비금속 이물질로 인한 난반사 효과를
+ * 간소화해서 모델링한 것이라고 이해하면 됨.
+ *
+ * 그래서, 원본 반사벡터의 end point 를 중점으로 하는 퍼짐 구(= fuzz sphere) 상의 임의의 점으로
+ * 반사벡터의 end point 업데이트하여 반사벡터를 일정 각도 범위 내에서 약간씩 randomize 함으로써
+ * 비금속 이물질의 난반사를 흉내내려는 것!
  */
 
 #endif /* MATERIAL_HPP */
