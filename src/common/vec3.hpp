@@ -189,6 +189,15 @@ inline vec3 random_on_hemisphere(const vec3 &normal)
   }
 }
 
+// 노멀벡터 n 을 기준으로 한 incident ray v 의 반사벡터 계산
+inline vec3 reflect(const vec3 &v, const vec3 &n)
+{
+  // glsl reflect() 함수와 동일한 공식 (참고 : https://registry.khronos.org/OpenGL-Refpages/gl4/html/reflect.xhtml)
+  // 반사벡터 계산 원리는 raytracing one weekeend 본문 참고 (참고 : https://raytracing.github.io/books/RayTracingInOneWeekend.html#metal/mirroredlightreflection)
+  // 참고로, dot(v, n)은 내적으로 v 를 n 방향으로 투영한 정사영 벡터의 스칼라 성분(= 길이)를 구한 것 (참고 : 미적분학 p.470 > 정사영 벡터)
+  return v - 2.0f * dot(v, n) * n;
+};
+
 /**
  * inline 키워드
  *
