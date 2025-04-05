@@ -202,7 +202,7 @@ inline vec3 reflect(const vec3 &v, const vec3 &n)
 inline vec3 refract(const vec3 &uv, const vec3 &n, double etai_over_etat)
 {
   /** Snell's Law(스넬의 법칙) 기반 굴절 벡터 계산 */
-  // 입사광선 R 와 노멀벡터 n 사잇각의 cos 값을 내적으로 계산 (두 벡터는 정규화되어 전달된다고 가정.)
+  // 입사광선 R 와 노멀벡터 n 사잇각(= 입사각) cos 값을 내적으로 계산 (두 벡터는 정규화되어 전달된다고 가정.)
   auto cos_theta = std::fmin(dot(-uv, n), 1.0f);
   // 굴절광선 R' 을 노멀벡터 n' 에 대해 수직/수평 방향으로 각각 분리하여 계산
   vec3 r_out_perp = etai_over_etat * (uv + cos_theta * n);
