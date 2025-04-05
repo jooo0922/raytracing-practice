@@ -89,6 +89,59 @@ private:
 };
 
 /**
+ * dielectric(비전도체)의 산란 동작을 재정의하는 material 클래스 정의
+ *
+ * 참고로, dielectric 은 전기가 통하지 않는 절연체를 의미하며,
+ * 빛이 물질을 통과할 때 반사(reflection)와 굴절(refraction)이 동시에 일어나는 모든 (투명한) 비전도체 물질을 뜻함.
+ *
+ * 유리, 물, 다이아몬드, 플라스틱, 얼음, 아크릴 등이
+ * 모두 비전도체에 속한다.
+ */
+class dielectric : public material
+{
+public:
+  dielectric(double refraction_index) : refraction_index(refraction_index) {};
+
+  // dielectric 산란 동작 재정의
+  bool scatter(const ray &r_in, const hit_record &rec, color &attenuation, ray &scattered) const override
+  {
+    // 광선이 반사 또는 굴절 시 아무런 감쇄 없이 100% 투과 -> 즉, 비전도체 중에서도 물, 유리 등 이상적인 투명체에 대한 산란 동작만 구현.
+    attenuation = color(1.0f, 1.0f, 1.0f);
+
+    /**
+     * Snell's Law 기반 굴절광선 계산 시 필요한
+     * 입사광선 R 의 위치에 따른 두 매질의 상대 굴절률 η / η′ 계산
+     *
+     * 충돌 지점이 바깥쪽 표면이라면,
+     * 입사광선 R 이 속한 매질이 진공이므로, 진공의 굴절률 1.0 이 분자 η 이 되고,
+     *
+     * 충돌 지점이 안쪽 표면이라면,
+     * 입사광선 R 이 속한 매질이 현재 재질이므로, 현재 재질의 절대 굴절률 refraction_index 이 분자 η 이 된다.
+     */
+    double ri = rec.front_face ? (1.0f / refraction_index) : refraction_index;
+
+    // 굴절광선 계산을 위해 입사광선 R 정규화
+    vec3 unit_direction = unit_vector(r_in.direction());
+    // 입사광선 R 이 현재 재질에서 충돌했을 때의 굴절광선 R' 계산
+    vec3 refracted = refract(unit_direction, rec.normal, ri);
+
+    // 굴절광선 R' 을 다음 산란 방향으로 정의
+    scattered = ray(rec.p, refracted);
+    return true;
+  };
+
+private:
+  /**
+   * 주변 매질에 대한 현재 재질의 상대 굴절률로써,
+   * 실제 사용자는 아래 두 가지 케이스 중 하나로 굴절률을 계산하여 넘겨주어야 함.
+   *
+   * 1. 진공/공기 기준 현재 재질의 절대 굴절률(= 주변 매질이 진공(굴절률 1.0)인 상대 굴절률이라고도 볼 수 있음.)
+   * 2. 임의의 주변 매질에 대한 현재 재질의 상대 굴절률
+   */
+  double refraction_index;
+};
+
+/**
  * material::scatter() 역할
  *
  *
