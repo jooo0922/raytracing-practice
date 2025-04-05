@@ -28,7 +28,12 @@ int main(int argc, char *argv[])
   /** 각 Hittable 객체에 적용할 재질(Material)을 shared_ptr로 생성하여 공유 가능하도록 관리 */
   auto material_ground = std::make_shared<lambertian>(color(0.8f, 0.8f, 0.0f));
   auto material_center = std::make_shared<lambertian>(color(0.1f, 0.2f, 0.5f));
-  auto material_left = std::make_shared<dielectric>(1.5f);
+  /**
+   * 구체의 기하학적 특성상 전반사를 관찰하기 어려움.
+   * 따라서, 주변 매질의 굴절률이 구체 매질의 굴절률보다 높은 상황(ex> 물(굴절률 1.33) 속 공기 방울(굴절률 1.0))을 가정하여
+   * 구체에서도 전반사를 쉽게 관찰할 수 있도록 상대 굴절률을 조정함.
+   */
+  auto material_left = std::make_shared<dielectric>(1.0f / 1.33f);
   auto material_right = std::make_shared<metal>(color(0.8f, 0.6f, 0.2f), 1.0f);
 
   /** world(scene) 역할을 수행하는 hittable_list 생성 및 hittable object 추가 */
