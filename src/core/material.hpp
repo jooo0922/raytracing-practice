@@ -40,7 +40,7 @@ public:
 
     scattered = ray(rec.p, scatter_direction);
 
-    // metal 재질에서의 albedo 는 감쇄된 난반사 색상이 아닌, 파장마다 반사율 차이로 인한 정반사(specular reflection)의 색조(tint)로 봐야 함.
+    // 입자에 흡수(감쇄)되고 남은 난반사(albedo)를 충돌한 ray 산란(반사)될 때의 attenuation 값으로 할당.
     attenuation = albedo;
 
     // (일정 확률로)산란할 ray 생성에 성공했다면 true 반환
@@ -70,7 +70,7 @@ public:
     reflected = unit_vector(reflected) + (fuzz * random_unit_vector());
     scattered = ray(rec.p, reflected);
 
-    // 입자에 흡수(감쇄)되고 남은 난반사(albedo)를 충돌한 ray 산란(반사)될 때의 attenuation 값으로 할당.
+    // metal 재질에서의 albedo 는 감쇄된 난반사 색상이 아닌, 파장마다 반사율 차이로 인한 정반사(specular reflection)의 색조(tint)로 봐야 함.
     attenuation = albedo;
 
     /**
