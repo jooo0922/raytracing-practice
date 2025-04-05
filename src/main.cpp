@@ -28,7 +28,7 @@ int main(int argc, char *argv[])
   /** 각 Hittable 객체에 적용할 재질(Material)을 shared_ptr로 생성하여 공유 가능하도록 관리 */
   auto material_ground = std::make_shared<lambertian>(color(0.8f, 0.8f, 0.0f));
   auto material_center = std::make_shared<lambertian>(color(0.1f, 0.2f, 0.5f));
-  auto material_left = std::make_shared<metal>(color(0.8f, 0.8f, 0.8f), 0.3f);
+  auto material_left = std::make_shared<dielectric>(1.5f);
   auto material_right = std::make_shared<metal>(color(0.8f, 0.6f, 0.2f), 1.0f);
 
   /** world(scene) 역할을 수행하는 hittable_list 생성 및 hittable object 추가 */
