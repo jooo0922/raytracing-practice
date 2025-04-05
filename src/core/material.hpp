@@ -122,11 +122,31 @@ public:
 
     // 굴절광선 계산을 위해 입사광선 R 정규화
     vec3 unit_direction = unit_vector(r_in.direction());
-    // 입사광선 R 이 현재 재질에서 충돌했을 때의 굴절광선 R' 계산
-    vec3 refracted = refract(unit_direction, rec.normal, ri);
 
-    // 굴절광선 R' 을 다음 산란 방향으로 정의
-    scattered = ray(rec.p, refracted);
+    /** 전반사(Total Internal Reflection) 여부 판정 (하단 필기 참고) */
+    // 입사광선 R 과 노멀벡터 n 사잇각(= 입사각) cos 값 계산
+    double cos_theta = std::fmin(dot(-unit_direction, rec.normal), 1.0f);
+    // 삼각함수 상호 관계 공식 중 하나인 sinθ^2 + cosθ^2 = 1 임을 활용하여 입사각 sin 값 계산
+    double sin_theta = std::sqrt(1.0f - cos_theta * cos_theta);
+
+    // 굴절각 sin = 입사각 sin * (두 매질의 상대 굴절률 η / η′) 으로 계산하여 굴절 가능 여부 판단
+    bool cannot_refract = ri * sin_theta > 1.0f;
+    vec3 direction;
+    if (cannot_refract)
+    {
+      // 굴절각 sin 이 1.0 보다 크다면, sin 값이 1.0 보다 클 수 없으므로, Snell's Law 성립 불가
+      // -> 굴절이 불가능하므로, 전반사(Total Internal Reflection) 처리
+      direction = reflect(unit_direction, rec.normal);
+    }
+    else
+    {
+      // 굴절각 sin 이 1.0 보다 작다면, Snell's Law 성립
+      // -> 굴절이 가능하므로, 현재 입사광선 R 에 대한 굴절광선 R' 계산
+      direction = refract(unit_direction, rec.normal, ri);
+    }
+
+    // 전반사 또는 굴절광선 R' 을 다음 산란 방향으로 정의
+    scattered = ray(rec.p, direction);
     return true;
   };
 
@@ -273,6 +293,37 @@ private:
  * 그래서, 원본 반사벡터의 end point 를 중점으로 하는 퍼짐 구(= fuzz sphere) 상의 임의의 점으로
  * 반사벡터의 end point 업데이트하여 반사벡터를 일정 각도 범위 내에서 약간씩 randomize 함으로써
  * 비금속 이물질의 난반사를 흉내내려는 것!
+ */
+
+/**
+ * 전반사(Total Internal Reflection)
+ *
+ *
+ * 굴절이 골치 아픈 이유 중 하나는,
+ * 스넬의 법칙으로는 해를 구할 수 없는 경우가 존재한다는 점!
+ *
+ * 빛이 굴절률이 더 낮은 매질로 들어갈 때
+ * (ex> 유리 → 공기, 물 속 공기 방울, 유리 안으로 굴절되어 들어간 빛이 다시 진공으로 빠져나갈 때,
+ * 고체 내부에서 빛이 외부러 나가려고 할 때 등...),
+ * 입사각이 일정 수준 이상으로 크다면, 굴절각이 90도 이상으로 커져서
+ * 결국 사실상 같은 매질 안으로 반사되어 버리는 케이스가 존재함.
+ *
+ * -> 이러한 현상을 '전반사(Total Internal Reflection)' 라고 함.
+ *
+ *
+ * 전반사는 해석적으로도 증명이 가능한데,
+ * Snell's Law 에서 굴절각 sin 값 계산 시,
+ * 굴절각 sin = 입사각 sin * (두 매질의 상대 굴절률 η / η′) 으로 계산했음.
+ *
+ * 이때, 입사광선이 유리(굴절률 1.5) 안에 있고, 진공(굴절률 1.0)으로 빠져나가려고 한다면,
+ * 굴절각 sin = 입사각 sin * (1.5 / 1.0) 으로 계산될 것임.
+ *
+ * 위 식을 계산할 때, 입사각 sin 이 일정 수준 이상으로 커진다면,
+ * 굴절각 sin 이 1.0 보다 커지는 케이스도 분명 존재하겠지?
+ * -> 그런데, sin 값이 1.0 보다 클 수는 없잖아?
+ *
+ * 따라서, 이 경우 Snell's Law 가 성립하지 못하는 상황이 발생함.
+ * 이 경우 굴절이 불가능하고, 빛이 전부 반사되어야만 함.
  */
 
 #endif /* MATERIAL_HPP */
