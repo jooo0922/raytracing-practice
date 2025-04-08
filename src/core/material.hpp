@@ -132,7 +132,13 @@ public:
     // 굴절각 sin = 입사각 sin * (두 매질의 상대 굴절률 η / η′) 으로 계산하여 굴절 가능 여부 판단
     bool cannot_refract = ri * sin_theta > 1.0f;
     vec3 direction;
-    if (cannot_refract)
+    /**
+     * 전반사(total internal reflection) 또는 정반사(specular reflection) 반사율 확률만큼 반사 처리
+     *
+     * ex> Schlick's Approximation 기반 근사한 반사율 F0 이 0.4 라면,
+     * [0.0f, 1.0f] 사이의 난수를 생성하여 40%의 확률로 입사광선을 반사 처리할 수 있도록 함.
+     */
+    if (cannot_refract || reflectance(cos_theta, ri) > random_double())
     {
       // 굴절각 sin 이 1.0 보다 크다면, sin 값이 1.0 보다 클 수 없으므로, Snell's Law 성립 불가
       // -> 굴절이 불가능하므로, 전반사(Total Internal Reflection) 처리
@@ -159,6 +165,23 @@ private:
    * 2. 임의의 주변 매질에 대한 현재 재질의 상대 굴절률
    */
   double refraction_index;
+
+  /**
+   * dielectric 매질에서의 '정'반사(specular reflection) 계산을 위해
+   * 입사광선 R 과 표면 노멀벡터 n 사이의 각도에 따른 반사율(Fresnel) 근사치 계산 함수
+   *
+   * -> 즉, 해당 매질의 상대 굴절률(refraction_index)에 따른 해당 각도에서의 반사 확률을
+   * Schlick's Approximation 으로 근사하는 공식 (노션 Fresnel Equation 필기 참고)
+   */
+  static double reflectance(double cosine, double refraction_index)
+  {
+    // 현재 매질의 상대 굴절률(refraction_index)에 따른 기본 반사율 F0(-> 표면을 수직으로 바라봤을 때의 반사율) 계산
+    auto r0 = (1.0f - refraction_index) / (1.0f + refraction_index);
+    r0 = r0 * r0;
+
+    // 기본 반사율 F0 기반 Schlick's Approximation 으로 반사율 근사
+    return r0 + (1.0f - r0) * std::pow((1.0f - cosine), 5);
+  };
 };
 
 /**
