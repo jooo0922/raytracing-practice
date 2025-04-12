@@ -12,6 +12,8 @@ public:
   int samples_per_pixel = 10; // antialiasing 을 위해 사용할 각 pixel 주변 random sample 개수
   int max_depth = 10;         // ray bouncing 최대 횟수 (= 각 ray 마다 최대 재귀 순회 깊이 제한)
 
+  double vfov = 90.0f; // camera frustum 의 수직 방향 fov(field of view) 각도
+
 public:
   // pixel 들을 순회하며 출력 스트림(std::ofstream or std::ostream)에 데이터 출력(= .ppm 이미지 렌더링)
   void render(std::ostream &output_stream, const hittable &world)
@@ -71,8 +73,17 @@ private:
     pixel_samples_scale = 1.0f / samples_per_pixel;
 
     /** 카메라 및 viewport 파라미터 정의 */
+    /**
+     * fov 각도의 tan 비 기반으로 viewport 크기를 계산하므로,
+     * fov 각도에 따라 카메라가 담을 수 있는 시야각이 달라짐.
+     *
+     * -> fov 가 커질수록 카메라가 담을 수 있는 시야각이 넓어지므로,
+     * 마치 zoom-out 되는 듯한 효과를 줄 수 있음.
+     */
     auto focal_length = 1.0;                                                                   // 카메라 중점(eye point)과 viewport 사이의 거리 (현재는 단위 거리 1로 지정함.)
-    auto viewport_height = 2.0;                                                                // viewport 높이 정의
+    auto theta = degrees_to_radians(vfov);                                                     // 카메라 수직 방향 fov 각도 단위를 degree -> radian 으로 변환
+    auto h = std::tan(theta / 2);                                                              // 카메라 수직 방향 fov 절반 지점 방향을 밑변으로 하는 직각삼각형의 tan 비 계산
+    auto viewport_height = 2 * h * focal_length;                                               // viewport 높이 정의 (직각삼각형의 밑변의 길이 * tan 비 = 직각삼각형의 높이 계산(= viewport 높이 절반) -> 여기에 2배를 곱해서 viewport 최종 높이 계산)
     auto viewport_width = viewport_height * (static_cast<double>(image_width) / image_height); // viewport 너비 정의 (기존 aspect_ratio 는 casting 에 의해 소수점이 잘려나간 image_width & image_height 의 종횡비와 다르므로, 실제 image_width & image_height 로 종횡비 재계산).
     camera_center = point3(0, 0, 0);                                                           // 3D Scene 상에서 카메라 중점(eye point) > viewport 로 casting 되는 모든 ray 의 출발점이기도 함.
 
