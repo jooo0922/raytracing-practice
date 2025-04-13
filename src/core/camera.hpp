@@ -104,8 +104,8 @@ private:
      * viewport 구조에 존재하는 벡터 및 정점들 정의
      * (https://raytracing.github.io/books/RayTracingInOneWeekend.html > Figure 4 참고)
      */
-    auto viewport_u = vec3(viewport_width, 0, 0);   // viewport 왼쪽 끝에서 오른쪽 끝으로 향하는 수평 방향 벡터
-    auto viewport_v = vec3(0, -viewport_height, 0); // viewport 위쪽 끝에서 아래쪽 끝으로 향하는 수직 방향 벡터
+    auto viewport_u = viewport_width * u;   // viewport 왼쪽 끝에서 오른쪽 끝으로 향하는 수평 방향 벡터 -> 회전된 카메라 오른쪽 방향 기저 축을 따라 viewport 수평 벡터도 회전
+    auto viewport_v = viewport_height * -v; // viewport 위쪽 끝에서 아래쪽 끝으로 향하는 수직 방향 벡터 -> 회전된 카메라 위쪽 방향 기저 축을 따라 viewport 수직 벡터도 회전
 
     pixel_delta_u = viewport_u / image_width;  // pixel grid 의 각 픽셀 사이의 수평 방향 간격
     pixel_delta_v = viewport_v / image_height; // pixel grid 의 각 픽셀 사이의 수직 방향 간격
