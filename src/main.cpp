@@ -26,26 +26,20 @@ int main(int argc, char *argv[])
   }
 
   /** 각 Hittable 객체에 적용할 재질(Material)을 shared_ptr로 생성하여 공유 가능하도록 관리 */
-  // auto material_ground = std::make_shared<lambertian>(color(0.8f, 0.8f, 0.0f));
-  // auto material_center = std::make_shared<lambertian>(color(0.1f, 0.2f, 0.5f));
+  auto material_ground = std::make_shared<lambertian>(color(0.8f, 0.8f, 0.0f));
+  auto material_center = std::make_shared<lambertian>(color(0.1f, 0.2f, 0.5f));
   // 속이 빈 유리 구슬(Hollow glass sphere) 생성 (하단 필기 참고)
-  // auto material_left = std::make_shared<dielectric>(1.5f);
-  // auto material_bubble = std::make_shared<dielectric>(1.0f / 1.5f);
-  // auto material_right = std::make_shared<metal>(color(0.8f, 0.6f, 0.2f), 1.0f);
-
-  auto R = std::cos(pi / 4.0f);
-  auto material_left = std::make_shared<lambertian>(color(0.0f, 0.0f, 1.0f));
-  auto material_right = std::make_shared<lambertian>(color(1.0f, 0.0f, 0.0f));
+  auto material_left = std::make_shared<dielectric>(1.5f);
+  auto material_bubble = std::make_shared<dielectric>(1.0f / 1.5f);
+  auto material_right = std::make_shared<metal>(color(0.8f, 0.6f, 0.2f), 1.0f);
 
   /** world(scene) 역할을 수행하는 hittable_list 생성 및 hittable object 추가 */
   hittable_list world;
-  // world.add(std::make_shared<sphere>(point3(0.0f, -100.5f, -1.0f), 100.0f, material_ground)); // 반지름이 100 인 sphere 추가
-  // world.add(std::make_shared<sphere>(point3(0.0f, 0.0f, -1.2f), 0.5f, material_center));      // 반지름이 0.5 인 sphere 추가
-  // world.add(std::make_shared<sphere>(point3(-1.0f, 0.0f, -1.0f), 0.5f, material_left));
-  // world.add(std::make_shared<sphere>(point3(-1.0f, 0.0f, -1.0f), 0.4f, material_bubble));
-  // world.add(std::make_shared<sphere>(point3(1.0f, 0.0f, -1.0f), 0.5f, material_right));
-  world.add(std::make_shared<sphere>(point3(-R, 0.0f, -1.0f), R, material_left));
-  world.add(std::make_shared<sphere>(point3(R, 0.0f, -1.0f), R, material_right));
+  world.add(std::make_shared<sphere>(point3(0.0f, -100.5f, -1.0f), 100.0f, material_ground)); // 반지름이 100 인 sphere 추가
+  world.add(std::make_shared<sphere>(point3(0.0f, 0.0f, -1.2f), 0.5f, material_center));      // 반지름이 0.5 인 sphere 추가
+  world.add(std::make_shared<sphere>(point3(-1.0f, 0.0f, -1.0f), 0.5f, material_left));
+  world.add(std::make_shared<sphere>(point3(-1.0f, 0.0f, -1.0f), 0.4f, material_bubble));
+  world.add(std::make_shared<sphere>(point3(1.0f, 0.0f, -1.0f), 0.5f, material_right));
 
   /** camera 객체 생성 및 이미지 렌더링 수행 */
   camera cam;
@@ -56,7 +50,11 @@ int main(int argc, char *argv[])
   cam.samples_per_pixel = 10;
   cam.max_depth = 20;
 
-  cam.vfov = 90.0f;
+  // camera transform 관련 파라미터 설정
+  cam.vfov = 20.0f;
+  cam.lookfrom = point3(-2.0f, 2.0f, 1.0f);
+  cam.lookat = point3(0.0f, 0.0f, -1.0f);
+  cam.vup = vec3(0.0f, 1.0f, 0.0f);
 
   // 카메라 및 viewport 파라미터 내부에서 자동 초기화 후 .ppm 이미지 렌더링
   cam.render(output_file, world);
