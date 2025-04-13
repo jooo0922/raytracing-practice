@@ -91,6 +91,16 @@ private:
     camera_center = lookfrom;                                                                  // 3D Scene 상에서 카메라 중점(eye point) -> 카메라 위치(= view direction 출발점)으로 정의
 
     /**
+     * 카메라의 orientation(회전)을 정의하기 위해
+     * 카메라의 로컬 좌표계(= 뷰 좌표계)의 3개의 로컬 축(= 직교 정규 기저 벡터(orthonormal basis)) 계산
+     * (https://raytracing.github.io/books/RayTracingInOneWeekend.html > Figure 20 참고)
+     * (원래 회전 변환은 표준기저벡터에 회전변환이 적용된 세 로컬 축을 사용해서 정의됨. -> 게임수학 p.339 > 그림 10-5 참고)
+     */
+    w = unit_vector(lookfrom - lookat); // 카메라 view direction 반대 방향 기저 축(이 튜토리얼에서 오른손 좌표계를 사용하므로, +Z 축이 카메라 뒷쪽을 바라봄.)
+    u = unit_vector(cross(vup, w));     // 카메라 오른쪽 방향 기저 축
+    v = cross(w, u);                    // 카메라 위쪽 방향 기저 축
+
+    /**
      * viewport 구조에 존재하는 벡터 및 정점들 정의
      * (https://raytracing.github.io/books/RayTracingInOneWeekend.html > Figure 4 참고)
      */
