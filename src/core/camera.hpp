@@ -12,7 +12,10 @@ public:
   int samples_per_pixel = 10; // antialiasing 을 위해 사용할 각 pixel 주변 random sample 개수
   int max_depth = 10;         // ray bouncing 최대 횟수 (= 각 ray 마다 최대 재귀 순회 깊이 제한)
 
-  double vfov = 90.0f; // camera frustum 의 수직 방향 fov(field of view) 각도
+  double vfov = 90.0f;                        // camera frustum 의 수직 방향 fov(field of view) 각도
+  point3 lookfrom = point3(0.0f, 0.0f, 0.0f); // 카메라 위치(카메라 좌표계 기준 원점)
+  point3 lookat = point3(0.0f, 0.0f, -1.0f);  // 카메라가 바라보는 지점
+  vec3 vup = vec3(0.0f, 1.0f, 0.0f);          // 카메라 기준 위쪽 방향을 정의하는 기준 벡터 (하단 필기 참고)
 
 public:
   // pixel 들을 순회하며 출력 스트림(std::ofstream or std::ostream)에 데이터 출력(= .ppm 이미지 렌더링)
@@ -178,6 +181,7 @@ private:
   point3 pixel00_loc;         // 'pixel grid'의 좌상단 픽셀(이미지 좌표 상으로 (0,0)에 해당하는 픽셀)의 '3D Scene 상의' 좌표값 (Figure 4 에서 P(0,0) 으로 표시)
   vec3 pixel_delta_u;         // pixel grid 의 각 픽셀 사이의 수평 방향 간격
   vec3 pixel_delta_v;         // pixel grid 의 각 픽셀 사이의 수직 방향 간격
+  vec3 u, v, w;               // 카메라의 로컬 좌표계(= 뷰 좌표계)의 직교 정규 기저 벡터(orthonormal basis) -> 즉, 카메라의 orientation(회전)을 정의하기 위한 카메라 좌표계의 세 로컬 축!
 };
 
 /**
@@ -235,6 +239,28 @@ private:
  *
  * 이를 해결하기 위해, 유효한 ray 충돌 범위를 0.001 이상으로 보고,
  * 그 이하는 표면 아래에서 충돌한 잘못된 ray 충돌로 판정하여 조명 감쇄를 발생시키지 않는 것임
+ */
+
+/**
+ * vup (= view up)
+ *
+ *
+ * 예제 코드에 등장하는 두 벡터 vup 과 v 의 정의와 역할은 다음과 같이 구분 가능함.
+ *
+ * 1. vup
+ * - "카메라의 세계 기준 위쪽이 어디인가?" 를 알려주는 기준(reference) 벡터 (≠ 실제 카메라의 up 벡터)
+ * - '카메라 기준 머리 방향이 어디냐'를 결정해주는 방향 벡터
+ * - 카메라를 ‘기울일지 말지’를 결정하는 정보
+ *   (ex > lookfrom = (0, 0, 0), lookat = (0, 0, -1), vup = (0, 1, 0) 이라면, 카메라는 정면(-Z) 를 바라보며 수평을 유지한 상태이나,
+ *    vup = (1, 0, 0) 이면, 카메라는 여전히 같은 곳을 바라보지만, 90도 옆으로 기울어진 상태가 됨. -> 카메라의 세계 기준 위쪽을 Positive X 방향으로 결정했으니까!)
+ * - 아무 벡터든 view direction(lookfrom -> lookat)과 평행하지만 않으면 vup 으로 정의할 수 있음.
+ *   -> 단지 (0, 1, 0) 이 대부분의 world 좌표계가 y-up 기준이라서 편하고 안전한 기본값으로 사용할 뿐.
+ *
+ * 2. v
+ * - u, w 와 함께 형성되는 카메라의 로컬 좌표계(= 뷰 좌표계)의 직교 기저 벡터(u, v, w) 중 위쪽(up) 방향을 가리키는 로컬 축
+ * - 즉, 카메라 기저 벡터 중 위쪽을 가리키는 y축 역할에 해당하는 벡터
+ * - 이를 구하려면 view direction 에 직교하는 평면에 vup 을 투영('Project this up vector onto the plane orthogonal to the view direction ...')
+ *   해서 구해야 하지만, 실제 코드 상에서는 투영과 동등한 효과를 cross() 연산으로 구현함.
  */
 
 #endif /* CAMERA_HPP */
