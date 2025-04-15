@@ -146,7 +146,12 @@ private:
     auto pixel_sample = pixel00_loc + ((i + offset.x()) * pixel_delta_u) + ((j + offset.y()) * pixel_delta_v);
 
     // 카메라 ~ 각 pixel 주변 random sample 방향벡터 계산
-    auto ray_origin = camera_center;
+    /**
+     * 조리개 개방 각에 따라 ray 출발점을
+     * 'pinhole 카메라와 동일한 카메라 원점' 또는 'defocus disk 상 랜덤한 점' 으로 설정
+     * -> 개방 각이 0도 이상이어야 defocus blur 적용 가능
+     */
+    auto ray_origin = (defocus_angle <= 0.0f) ? camera_center : defocus_disk_sample();
     auto ray_direction = pixel_sample - ray_origin;
 
     return ray(ray_origin, ray_direction);
