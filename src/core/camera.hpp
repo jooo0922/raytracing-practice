@@ -4,6 +4,9 @@
 #include "../hittable/hittable.hpp"
 #include "../core/material.hpp"
 
+/**
+ * camera 동작 원리를 추상화한 클래스 (defocus blur 관련 하단 필기 참고)
+ */
 class camera
 {
 public:
@@ -272,6 +275,43 @@ private:
  * - 즉, 카메라 기저 벡터 중 위쪽을 가리키는 y축 역할에 해당하는 벡터
  * - 이를 구하려면 view direction 에 직교하는 평면에 vup 을 투영('Project this up vector onto the plane orthogonal to the view direction ...')
  *   해서 구해야 하지만, 실제 코드 상에서는 투영과 동등한 효과를 cross() 연산으로 구현함.
+ */
+
+/**
+ * Defocus Blur (Depth of Field)
+ *
+ * 기존 카메라 클래스는 모든 ray를 동일한 카메라 중심(camera::camera_center)에서 발사하므로,
+ * 실제로는 film 상에 모든 상이 정확히 한 점으로 맺히는 pinhole camera 모델과 같다.
+ * 이 경우, 초점 심도(depth of field)가 무한대이며, 모든 오브젝트가 선명하게 보이게 된다.
+ *
+ * 반면, 현실의 카메라는 렌즈와 조리개(aperture)를 사용하여 film과 scene 사이에 빛을 굴절시키고,
+ * 이로 인해 특정 거리의 오브젝트만 film 상의 한 점에 선명하게 맺히며, 나머지 오브젝트는 흐릿하게 맺히는
+ * defocus blur(= depth of field) 현상이 발생한다.
+ *
+ * Defocus blur를 구현하려면, 카메라 모델을 pinhole이 아닌
+ * '렌즈 + 조리개' 구조로 추상화해야 한다.
+ * 단, 실제 광학적 굴절이나 필름 상 맺힘, 상하 반전 등의 내부 과정은
+ * 렌더링에는 불필요하므로 생략하고, 이를 단순화한 모델이 바로 'Thin Lens Approximation'이다.
+ *
+ * Thin Lens Approximation에서는 카메라 렌즈를 무한히 얇은 원판으로 모델링하며,
+ * 이 렌즈 위에서 무작위로 선택된 출발점들로부터 viewport(pixel grid) 상의 pixel을 향해 ray를 발사한다.
+ *
+ * 이때, 렌즈로부터 특정 거리만큼 떨어진 평면을 'focus plane',
+ * 그 거리를 'focus distance'라고 한다.
+ *
+ * 튜토리얼에서는 이 focus plane과 동일한 위치에 viewport를 두고,
+ * focus plane 위의 픽셀로 향하는 ray를 각기 다른 렌즈 위의 출발점에서 발사함으로써
+ * defocus blur를 구현한다.
+ *
+ * 이 구조에서는 focus plane 위에 위치한 오브젝트는
+ * 여러 출발점에서 날아온 ray들이 동일한 위치에서 충돌하므로, 동일한 색을 반환하게 되어 선명하게 보인다.
+ *
+ * 반면, focus plane에서 멀리 떨어진 오브젝트는
+ * 출발점에 따라 충돌 위치가 달라지고, 각기 다른 색을 반환하게 되어
+ * 해당 픽셀에는 다양한 색이 혼합되며 blur처럼 보이게 된다.
+ *
+ * 또한, 조리개 반경(lens radius)이 커질수록 defocus blur는 더욱 강하게 나타나며,
+ * 이 조리개 개방 각은 카메라 파라미터(defocus_angle)로 제어할 수 있다.
  */
 
 #endif /* CAMERA_HPP */
