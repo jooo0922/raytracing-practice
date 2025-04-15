@@ -20,6 +20,9 @@ public:
   point3 lookat = point3(0.0f, 0.0f, -1.0f);  // 카메라가 바라보는 지점
   vec3 vup = vec3(0.0f, 1.0f, 0.0f);          // 카메라 기준 위쪽 방향을 정의하는 기준 벡터 (하단 필기 참고)
 
+  double defocus_angle = 0.0f; // 조리개 개방 각 -> 이 각도가 커질수록 조리개 반경이 커져서 더 많은 빛이 들어옴 -> defocus blur 강도가 커짐.
+  double focus_dist = 10.0f;   // camera lens 에서 focus plane(= viewport or pixel grid) 까지의 거리
+
 public:
   // pixel 들을 순회하며 출력 스트림(std::ofstream or std::ostream)에 데이터 출력(= .ppm 이미지 렌더링)
   void render(std::ostream &output_stream, const hittable &world)
@@ -196,6 +199,8 @@ private:
   vec3 pixel_delta_u;         // pixel grid 의 각 픽셀 사이의 수평 방향 간격
   vec3 pixel_delta_v;         // pixel grid 의 각 픽셀 사이의 수직 방향 간격
   vec3 u, v, w;               // 카메라의 로컬 좌표계(= 뷰 좌표계)의 직교 정규 기저 벡터(orthonormal basis) -> 즉, 카메라의 orientation(회전)을 정의하기 위한 카메라 좌표계의 세 로컬 축!
+  vec3 defocus_disk_u;        // 조리개 원판 영역(defocus_disk)의 수평 방향 반지름 벡터 (카메라 right 방향으로 회전 및 조리개 반경만큼 스케일한 수평 방향 기저벡터)
+  vec3 defocus_disk_v;        // 조리개 원판 영역(defocus_disk)의 수직 방향 반지름 벡터 (카메라 up 방향으로 회전 및 조리개 반경만큼 스케일한 수직 방향 기저벡터)
 };
 
 /**
