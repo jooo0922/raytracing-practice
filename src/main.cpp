@@ -56,6 +56,10 @@ int main(int argc, char *argv[])
   cam.lookat = point3(0.0f, 0.0f, -1.0f);
   cam.vup = vec3(0.0f, 1.0f, 0.0f);
 
+  // defocus blur 관련 파라미터 성정
+  cam.defocus_angle = 10.0f;
+  cam.focus_dist = 3.4f;
+
   // 카메라 및 viewport 파라미터 내부에서 자동 초기화 후 .ppm 이미지 렌더링
   cam.render(output_file, world);
 
