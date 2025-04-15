@@ -89,10 +89,13 @@ private:
      * -> fov 가 커질수록 카메라가 담을 수 있는 시야각이 넓어지므로,
      * 마치 zoom-out 되는 듯한 효과를 줄 수 있음.
      */
-    auto focal_length = (lookfrom - lookat).length();                                          // 카메라 중점(eye point)과 viewport 사이의 거리 -> view direction(lookfrom -> lookat)의 거리로 정의
+    /**
+     * 카메라 중점에서 viewport 까지의 거리를 focus_dist(= 카메라 렌즈에서 focus plane 까지의 거리)와 맞추기로 했으므로,
+     * focal_length -> focus_dist 로 교체함.
+     */
     auto theta = degrees_to_radians(vfov);                                                     // 카메라 수직 방향 fov 각도 단위를 degree -> radian 으로 변환
     auto h = std::tan(theta / 2);                                                              // 카메라 수직 방향 fov 절반 지점 방향을 밑변으로 하는 직각삼각형의 tan 비 계산
-    auto viewport_height = 2 * h * focal_length;                                               // viewport 높이 정의 (직각삼각형의 밑변의 길이 * tan 비 = 직각삼각형의 높이 계산(= viewport 높이 절반) -> 여기에 2배를 곱해서 viewport 최종 높이 계산)
+    auto viewport_height = 2 * h * focus_dist;                                                 // viewport 높이 정의 (직각삼각형의 밑변의 길이 * tan 비 = 직각삼각형의 높이 계산(= viewport 높이 절반) -> 여기에 2배를 곱해서 viewport 최종 높이 계산)
     auto viewport_width = viewport_height * (static_cast<double>(image_width) / image_height); // viewport 너비 정의 (기존 aspect_ratio 는 casting 에 의해 소수점이 잘려나간 image_width & image_height 의 종횡비와 다르므로, 실제 image_width & image_height 로 종횡비 재계산).
     camera_center = lookfrom;                                                                  // 3D Scene 상에서 카메라 중점(eye point) -> 카메라 위치(= view direction 출발점)으로 정의
 
@@ -118,7 +121,7 @@ private:
 
     // 뷰포트의 좌상단 꼭지점의 '3D 공간 상의' 좌표 계산 (이미지 좌표 아님 주의!) (Figure 4 에서 Q 로 표시)
     // (카메라 중점(= camera_center) 에서 view direction(= -w) 방향으로 focal_length 길이만큼 떨어진 지점의 좌표를 viewport 중점으로 계산)
-    auto viewport_upper_left = camera_center - (focal_length * w) - viewport_u / 2 - viewport_v / 2;
+    auto viewport_upper_left = camera_center - (focus_dist * w) - viewport_u / 2 - viewport_v / 2;
 
     // 'pixel grid'의 좌상단 픽셀(이미지 좌표 상으로 (0,0)에 해당하는 픽셀)의 '3D 공간 상의' 좌표 계산 (Figure 4 에서 P(0,0) 으로 표시)
     pixel00_loc = viewport_upper_left + 0.5 * (pixel_delta_u + pixel_delta_v);
