@@ -125,6 +125,13 @@ private:
 
     // 'pixel grid'의 좌상단 픽셀(이미지 좌표 상으로 (0,0)에 해당하는 픽셀)의 '3D 공간 상의' 좌표 계산 (Figure 4 에서 P(0,0) 으로 표시)
     pixel00_loc = viewport_upper_left + 0.5 * (pixel_delta_u + pixel_delta_v);
+
+    // 조리개 개방 각을 기반으로 조리개 반경 계산 (하단 필기 참고)
+    auto defocus_radius = focus_dist * std::tan(degrees_to_radians(defocus_angle) / 2.0f);
+
+    // 조리개에 의해 개방된 반경만큼의 lens disk 로컬 기저벡터 계산 (하단 필기 참고)
+    defocus_disk_u = u * defocus_radius;
+    defocus_disk_v = v * defocus_radius;
   };
 
   // 카메라 ~ 각 pixel 주변 random sample 까지 향하는 random ray(반직선) 생성 함수 (viewport 상 현재 pixel row(= i), column(= j) 값을 매개변수로 받아서 위치값 계산)
@@ -322,4 +329,44 @@ private:
  * 이 조리개 개방 각은 카메라 파라미터(defocus_angle)로 제어할 수 있다.
  */
 
+/**
+ * defocus_angle 에 따라 일정한 blur 강도를 유지하는 조리개 반경 계산 방법
+ *
+ *
+ * defocus blur 강도를 제어하는 조리개 개방 각도(defocus_angle)를 기반으로,
+ * focus plane 중심에서 바라본 cone의 반각을 이용해 defocus disk의 반지름을 계산한다.
+ *
+ * 즉, viewport center 가 꼭지점이고, defocus disk 가 밑면을 이루는 cone 에서
+ * 꼭지점 부분의 각도를 defocus_angle(조리개 개방 각)으로 정의한다.
+ *
+ * 이때, cone 개방 각의 절반 지점에 해당하는 직각삼각형에 대한 tan 비를
+ * focus_dist(= 직각삼각형의 밑변) 와 곱해서 defocus_radius(= 직각삼각형의 높이)를 구한다.
+ *
+ * 이렇게 하면 항상 직각삼각형이 일정한 각도와 비율을 유지하게 됨으로써,
+ * focus_dist 파라미터가 사용자에 의해 변경되더라도,
+ * defocus_angle 이 일정하면 blur 또한 일정하게 유지될 수 있음.
+ *
+ * 왜냐하면, 카메라가 focus_plane 에 가까워질수록 blur 의 강도가 강해져도,
+ * defocus_angle 을 일정하게 유지하기 위해 그만큼 defocus_radius 또한 줄어들기 때문에
+ * blur 정도가 일정해지는 것!
+ */
+
+/**
+ * lens disk 상의 로컬 기저벡터(= x축, y축) 계산 이유
+ *
+ *
+ * random_in_unit_disk() 유틸 함수로 반환받은 좌표값은
+ * 표준기저벡터 [1, 0](x축), [0, 1](y축) 로 이루어진 좌표계 상의
+ * 단위 원 내의 랜덤한 점을 반환해 줌.
+ *
+ * 그러나, 우리는 이 랜덤한 점을 현재 카메라 lens 상의
+ * 랜덤한 점으로 변환해줘야 함.
+ *
+ * 따라서, 카메라 orienting 에 의해 회전된 두 카메라 기저벡터 u,v 와
+ * defocus_radius 를 사용하여 조리개 반경만큼 노출된 dist_lens 상의
+ * 로컬 좌표계의 두 기저벡터 defocus_disk_u, defocus_disk_v 를 계산한 것임.
+ *
+ * 이 로컬 기저벡터를 사용하면 단위 원 상의 랜덤한 점을
+ * 조리개 반경만큼 노출된 카메라 lens 상의 랜덤한 점으로 변환(맵핑)할 수 있음.
+ */
 #endif /* CAMERA_HPP */
