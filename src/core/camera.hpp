@@ -158,6 +158,15 @@ private:
     return vec3(random_double() - 0.5f, random_double() - 0.5f, 0.0f);
   };
 
+  // defocus lens 상 랜덤한 ray 출발점 반환 함수
+  point3 defocus_disk_sample() const
+  {
+    // 표준기저벡터로 이루어진 좌표계 상 단위 원 내의 랜덤 점 반환
+    auto p = random_in_unit_disk();
+    // 단위 원 상의 랜덤 점 -> defocus disk 상의 랜덤 점으로 변환
+    return camera_center + (p[0] * defocus_disk_u) + (p[1] * defocus_disk_v);
+  };
+
   // 주어진 반직선(ray)을 world 에 casting 하여 계산된 최종 색상값을 반환하는 함수
   color ray_color(const ray &r, int depth, const hittable &world)
   {
