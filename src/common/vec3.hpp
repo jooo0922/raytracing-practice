@@ -154,7 +154,21 @@ inline vec3 unit_vector(vec3 v)
   return v / v.length();
 }
 
-// 단위 원(unit sphere. 반지름 1) 표면 상의 랜덤 방향벡터 연산 (rejection method 기반)
+// 단위 원(unit disk. 반지름 1) 내의 랜덤 좌표값 연산 (rejection method 기반)
+inline vec3 random_in_unit_disk()
+{
+  while (true)
+  {
+    auto p = vec3(random_double(-1.0f, 1.0f), random_double(-1.0f, 1.0f), 0.0f);
+    // 생성된 좌표값의 원점으로부터의 길이가 1.0(= unit disk 반지름)를 넘어설 경우 reject 한다.
+    if (p.length_squared() < 1.0f)
+    {
+      return p;
+    }
+  }
+}
+
+// 단위 구(unit sphere. 반지름 1) 표면 상의 랜덤 방향벡터 연산 (rejection method 기반)
 inline vec3 random_unit_vector()
 {
   while (true)
