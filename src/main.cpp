@@ -86,20 +86,20 @@ int main(int argc, char *argv[])
   camera cam;
 
   // 주요 이미지 파라미터 설정
-  cam.image_width = 400;
+  cam.image_width = 1200;
   cam.aspect_ratio = 16.0f / 9.0f;
-  cam.samples_per_pixel = 10;
-  cam.max_depth = 20;
+  cam.samples_per_pixel = 500;
+  cam.max_depth = 50;
 
   // camera transform 관련 파라미터 설정
   cam.vfov = 20.0f;
-  cam.lookfrom = point3(-2.0f, 2.0f, 1.0f);
-  cam.lookat = point3(0.0f, 0.0f, -1.0f);
+  cam.lookfrom = point3(13.0f, 2.0f, 3.0f);
+  cam.lookat = point3(0.0f, 0.0f, 0.0f);
   cam.vup = vec3(0.0f, 1.0f, 0.0f);
 
   // defocus blur 관련 파라미터 성정
-  cam.defocus_angle = 10.0f;
-  cam.focus_dist = 3.4f;
+  cam.defocus_angle = 0.6f;
+  cam.focus_dist = 10.0f;
 
   // 카메라 및 viewport 파라미터 내부에서 자동 초기화 후 .ppm 이미지 렌더링
   cam.render(output_file, world);
