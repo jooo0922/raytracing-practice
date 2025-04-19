@@ -25,18 +25,60 @@ int main(int argc, char *argv[])
     return 1;
   }
 
+  /** world(scene) 역할을 수행하는 hittable_list 생성 및 hittable object 추가 */
+  hittable_list world;
+
   /** 각 Hittable 객체에 적용할 재질(Material)을 shared_ptr로 생성하여 공유 가능하도록 관리 */
-  auto material_ground = std::make_shared<lambertian>(color(0.8f, 0.8f, 0.0f));
+  auto ground_material = std::make_shared<lambertian>(color(0.8f, 0.8f, 0.0f));
+  world.add(std::make_shared<sphere>(point3(0.0f, -1000.0f, -1.0f), 1000.0f, ground_material)); // 반지름이 1000 인 지면 sphere 추가
+
+  /** 484개(= 22 * 22)의 소형 sphere 생성 후 world 에 추가 */
+  for (int a = -11; a < 11; a++)
+  {
+    for (int b = -11; b < 11; b++)
+    {
+      // 소형 sphere 에 적용할 재질 유형을 결정하기 위한 [0.0, 1.0] 사이의 난수 생성
+      auto choose_mat = random_double();
+      // 격자 좌표(a, 0.2, b) 주변에 약간의 난수 오프셋을 더해, sphere 위치를 자연스럽게 분산시키기
+      point3 center(a + 0.9f * random_double(), 0.2f, b + 0.9f * random_double());
+
+      // 특정 위치(4, 0.2, 0)에 배치된 대형 금속 sphere 와 겹치지 않도록 하기 위해, 해당 위치로부터 일정 거리 이상 떨어진 경우에만 소형 sphere 추가
+      if ((center - point3(4.0f, 0.2f, 0.0f)).length() > 0.9f)
+      {
+        std::shared_ptr<material> sphere_material;
+
+        if (choose_mat < 0.8f)
+        {
+          // 80% 확률로 diffuse material 적용하여 소형 sphere 생성
+          auto albedo = color::random() * color::random();
+          sphere_material = std::make_shared<lambertian>(albedo);
+          world.add(std::make_shared<sphere>(center, 0.2f, sphere_material));
+        }
+        else if (choose_mat < 0.95f)
+        {
+          // 15% 확률로(0.95 - 0.8 = 0.15) metal material 적용하여 소형 sphere 생성
+          auto albedo = color::random(0.5f, 1.0f);
+          auto fuzz = random_double(0.0f, 0.5f);
+          sphere_material = std::make_shared<metal>(albedo, fuzz);
+          world.add(std::make_shared<sphere>(center, 0.2f, sphere_material));
+        }
+        else
+        {
+          // 5% 확률로(1.0 - 0.95 = 0.05) glass material 적용하여 소형 sphere 생성
+          sphere_material = std::make_shared<dielectric>(1.5f);
+          world.add(std::make_shared<sphere>(center, 0.2f, sphere_material));
+        }
+      }
+    }
+  }
+
   auto material_center = std::make_shared<lambertian>(color(0.1f, 0.2f, 0.5f));
   // 속이 빈 유리 구슬(Hollow glass sphere) 생성 (하단 필기 참고)
   auto material_left = std::make_shared<dielectric>(1.5f);
   auto material_bubble = std::make_shared<dielectric>(1.0f / 1.5f);
   auto material_right = std::make_shared<metal>(color(0.8f, 0.6f, 0.2f), 1.0f);
 
-  /** world(scene) 역할을 수행하는 hittable_list 생성 및 hittable object 추가 */
-  hittable_list world;
-  world.add(std::make_shared<sphere>(point3(0.0f, -100.5f, -1.0f), 100.0f, material_ground)); // 반지름이 100 인 sphere 추가
-  world.add(std::make_shared<sphere>(point3(0.0f, 0.0f, -1.2f), 0.5f, material_center));      // 반지름이 0.5 인 sphere 추가
+  world.add(std::make_shared<sphere>(point3(0.0f, 0.0f, -1.2f), 0.5f, material_center)); // 반지름이 0.5 인 sphere 추가
   world.add(std::make_shared<sphere>(point3(-1.0f, 0.0f, -1.0f), 0.5f, material_left));
   world.add(std::make_shared<sphere>(point3(-1.0f, 0.0f, -1.0f), 0.4f, material_bubble));
   world.add(std::make_shared<sphere>(point3(1.0f, 0.0f, -1.0f), 0.5f, material_right));
