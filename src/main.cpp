@@ -72,16 +72,15 @@ int main(int argc, char *argv[])
     }
   }
 
-  auto material_center = std::make_shared<lambertian>(color(0.1f, 0.2f, 0.5f));
-  // 속이 빈 유리 구슬(Hollow glass sphere) 생성 (하단 필기 참고)
-  auto material_left = std::make_shared<dielectric>(1.5f);
-  auto material_bubble = std::make_shared<dielectric>(1.0f / 1.5f);
-  auto material_right = std::make_shared<metal>(color(0.8f, 0.6f, 0.2f), 1.0f);
+  /** 각 재질이 적용된 3개의 대형 sphere 생성 후 world 에 추가 */
+  auto material1 = std::make_shared<dielectric>(1.5f);
+  world.add(std::make_shared<sphere>(point3(0.0f, 1.0f, 0.0f), 1.0f, material1));
 
-  world.add(std::make_shared<sphere>(point3(0.0f, 0.0f, -1.2f), 0.5f, material_center)); // 반지름이 0.5 인 sphere 추가
-  world.add(std::make_shared<sphere>(point3(-1.0f, 0.0f, -1.0f), 0.5f, material_left));
-  world.add(std::make_shared<sphere>(point3(-1.0f, 0.0f, -1.0f), 0.4f, material_bubble));
-  world.add(std::make_shared<sphere>(point3(1.0f, 0.0f, -1.0f), 0.5f, material_right));
+  auto material2 = std::make_shared<lambertian>(color(0.4f, 0.2f, 0.1f));
+  world.add(std::make_shared<sphere>(point3(-4.0f, 1.0f, 0.0f), 1.0f, material2));
+
+  auto material3 = std::make_shared<metal>(color(0.7f, 0.6f, 0.5f), 0.0f);
+  world.add(std::make_shared<sphere>(point3(4.0f, 1.0f, 0.0f), 1.0f, material3));
 
   /** camera 객체 생성 및 이미지 렌더링 수행 */
   camera cam;
