@@ -154,7 +154,10 @@ private:
     auto ray_origin = (defocus_angle <= 0.0f) ? camera_center : defocus_disk_sample();
     auto ray_direction = pixel_sample - ray_origin;
 
-    return ray(ray_origin, ray_direction);
+    // [0.0초, 1.0초] 구간 사이의 랜덤 시점으로 ray 생성 시점 계산 (하단 필기 참고)
+    auto ray_time = random_double();
+
+    return ray(ray_origin, ray_direction, ray_time);
   };
 
   // (-0.5f, -0.5f) ~ (0.5f, 0.5f) 범위 내의 단위 사각형(1*1 size) 안에 존재하는 random point 반환 함수
@@ -383,4 +386,19 @@ private:
  * 이 로컬 기저벡터를 사용하면 단위 원 상의 랜덤한 점을
  * 조리개 반경만큼 노출된 카메라 lens 상의 랜덤한 점으로 변환(맵핑)할 수 있음.
  */
+
+/**
+ * 카메라 클래스 내에서 Motion Blur 시뮬레이션을 위한 시간 정보 추가
+ *
+ *
+ * 원래는 셔터 스피드(shutter speed), 프레임 간 주기(frame-to-frame period) 등
+ * 복잡한 셔터 타이밍 개념을 고려해야 하지만,
+ * 현재는 단일 프레임만 생성하는 것이므로 이러한 설정은 생략함.
+ *
+ * 카메라 클래스 내 ray 생성 함수(camera::get_ray)에서
+ * [0.0초, 1.0초] 구간 내 랜덤한 생성 시점을 자동으로 부여하도록 수정.
+ *
+ * 이를 통해 시간(time) 축 상에서 Motion Blur 효과를 단순하게 시뮬레이션 가능.
+ */
+
 #endif /* CAMERA_HPP */
