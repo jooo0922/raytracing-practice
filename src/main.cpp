@@ -50,9 +50,11 @@ int main(int argc, char *argv[])
         if (choose_mat < 0.8f)
         {
           // 80% 확률로 diffuse material 적용하여 소형 sphere 생성
+          // 정적 sphere(center) 대신 time=0 ~ 1 사이 선형 이동하는 moving sphere(center → center2)로 생성
           auto albedo = color::random() * color::random();
           sphere_material = std::make_shared<lambertian>(albedo);
-          world.add(std::make_shared<sphere>(center, 0.2f, sphere_material));
+          auto centrt2 = center + vec3(0.0f, random_double(0.0f, 0.5f), 0.0f);
+          world.add(std::make_shared<sphere>(center, centrt2, 0.2f, sphere_material));
         }
         else if (choose_mat < 0.95f)
         {
@@ -86,9 +88,9 @@ int main(int argc, char *argv[])
   camera cam;
 
   // 주요 이미지 파라미터 설정
-  cam.image_width = 1200;
+  cam.image_width = 400;
   cam.aspect_ratio = 16.0f / 9.0f;
-  cam.samples_per_pixel = 10;
+  cam.samples_per_pixel = 100;
   cam.max_depth = 20;
 
   // camera transform 관련 파라미터 설정
