@@ -38,7 +38,7 @@ public:
       scatter_direction = rec.normal;
     }
 
-    scattered = ray(rec.p, scatter_direction);
+    scattered = ray(rec.p, scatter_direction, r_in.time());
 
     // 입자에 흡수(감쇄)되고 남은 난반사(albedo)를 충돌한 ray 산란(반사)될 때의 attenuation 값으로 할당.
     attenuation = albedo;
@@ -68,7 +68,7 @@ public:
     // 반사벡터의 end point 를 중점으로 하는 퍼짐 구(= fuzz sphere) 상의 임의의 점으로 반사벡터의 end point 업데이트 -> 반사벡터를 약간씩 randomize 함 (하단 필기 참고)
     // (이때, 반사벡터 길이에 따라 퍼짐 구(= fuzz sphere) 상의 random vector 와 벡터의 합 결과가 달라지므로, 일관된 효과 보장을 위해 반사벡터의 길이를 정규화해야 함.)
     reflected = unit_vector(reflected) + (fuzz * random_unit_vector());
-    scattered = ray(rec.p, reflected);
+    scattered = ray(rec.p, reflected, r_in.time());
 
     // metal 재질에서의 albedo 는 감쇄된 난반사 색상이 아닌, 파장마다 반사율 차이로 인한 정반사(specular reflection)의 색조(tint)로 봐야 함.
     attenuation = albedo;
@@ -152,7 +152,7 @@ public:
     }
 
     // 전반사 또는 굴절광선 R' 을 다음 산란 방향으로 정의
-    scattered = ray(rec.p, direction);
+    scattered = ray(rec.p, direction, r_in.time());
     return true;
   };
 
