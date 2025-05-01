@@ -40,6 +40,94 @@ public:
       return z;
     return x;
   };
+
+  // 주어진 광선(ray)이 AABB를 통과하는지 여부를 검사 (slab method 기반 -> 하단 필기 참고)
+  bool hit(const ray &r, interval ray_t) const
+  {
+    // 주어진 광선의 출발점과 방향벡터
+    const point3 &ray_origin = r.origin();
+    const vec3 &ray_dir = r.direction();
+
+    // AABB 를 구성하는 각 축의 slab 을 순회하며 주어진 광선과 교차 여부 검사
+    for (int axis = 0; axis < 3; axis++)
+    {
+      // 현재 축의 슬랩(interval) 가져오기
+      const interval &ax = axis_interval(axis);
+      /**
+       * 슬랩 경계면과 주어진 광선 상의 교차 지점 t0, t1 계산 공식 상의 denominator(분모)인
+       * dx, dy, dz 를 미리 역수로 계산해두는 것.
+       *
+       * https://raytracing.github.io/books/RayTracingTheNextWeek.html#boundingvolumehierarchies/rayintersectionwithanaabb 참고
+       */
+      const double adinv = 1.0f / ray_dir[axis];
+
+      // 슬랩 경계면과 광선의 교차 시점 t0, t1 계산
+      auto t0 = (ax.min - ray_origin[axis]) * adinv;
+      auto t1 = (ax.max - ray_origin[axis]) * adinv;
+
+      // t0, t1의 순서가 반대일 수 있으므로 정렬
+      if (t0 < t1)
+      {
+        // 광선이 각 축의 슬랩에 진입할 때, 가장 늦은 진입 시점을 ray_t.min에 반영
+        if (t0 > ray_t.min)
+          ray_t.min = t0;
+        // 광선이 각 축의 슬랩에서 탈출할 때, 가장 빠른 탈출 시점을 ray_t.max에 반영
+        if (t1 < ray_t.max)
+          ray_t.max = t1;
+      }
+      else
+      {
+        if (t1 > ray_t.min)
+          ray_t.min = t1;
+        if (t0 < ray_t.max)
+          ray_t.max = t0;
+      }
+
+      /**
+       * 광선의 slab 진입 시점보다 탈출 시점이 빠르다는 건 논리적으로 맞지 않음
+       * -> 즉, ray 가 모든 slab 과 교차 불가하다는 뜻이므로, false 를 반환
+       */
+      if (ray_t.max <= ray_t.min)
+      {
+        return false;
+      }
+    }
+    return true;
+  };
 };
+
+/**
+ * aabb::hit()
+ *
+ *
+ * Slab method를 기반으로 광선(ray)과 AABB의 교차 여부를 검사한다.
+ *
+ * AABB는 x, y, z 세 축 각각에 대해 [min, max] 구간을 가지며,
+ * 이는 두 평면으로 이루어진 "슬랩(slab)"이라 부른다.
+ * 따라서 AABB는 총 세 개의 슬랩(x, y, z)의 **교집합**으로 구성된다.
+ *
+ * Slab method란, 광선이 각 슬랩에 들어가고 나가는 시점(t값)을 계산한 뒤,
+ * 세 슬랩에서 공통으로 광선이 내부에 머무르는 구간이 존재하는지를 검사하는 방식이다.
+ *
+ * 각 축별로:
+ *   - 슬랩 진입 시점: t0 = (slab.min - ray.origin) / ray.direction
+ *   - 슬랩 탈출 시점: t1 = (slab.max - ray.origin) / ray.direction
+ *   - 단, 방향이 음수일 수 있으므로 항상 min(t0, t1), max(t0, t1)로 정리함.
+ *
+ * 그 후, 전체 AABB에 대해 진입 가능한 가장 늦은 시점 t_min과,
+ * 탈출 가능한 가장 이른 시점 t_max를 누적하여 계산한다.
+ *
+ * 이 두 값이 겹치는지 여부(t_min < t_max)를 통해 AABB 교차 여부를 판단한다.
+ *
+ * 이 개념은 친구들 약속 시간 잡기 비유로도 이해할 수 있다:
+ *   - 각 축의 슬랩은 친구 1명,
+ *   - 슬랩이 허용하는 t 구간은 그 친구가 약속 가능한 시간대,
+ *   - 슬랩 진입 시점은 각 친구마다 모임 장소에 도착하는 시간,
+ *   - 슬랩 탈출 시점은 각 친구마다 모임 장소에서 떠나는 시간,
+ *   - 가장 늦은 진입 시점은 가장 늦게 모임 장소에 도착한 친구의 시간,
+ *   - 가장 빠른 탈출 시점은 가장 빨리 모임 장소에서 떠나는 친구의 시간,
+ *   - 세 슬랩(친구) 모두가 공통으로 만날 수 있는 시간이 존재할 때만(hit),
+ *     광선이 AABB를 통과했다고 본다.
+ */
 
 #endif /* AABB_HPP */
