@@ -30,6 +30,16 @@ public:
     x = (a[1] <= b[1]) ? interval(a[1], b[1]) : interval(b[1], a[1]);
     x = (a[2] <= b[2]) ? interval(a[2], b[2]) : interval(b[2], a[2]);
   };
+
+  // 지정한 축 인덱스(0:x, 1:y, 2:z)에 해당하는 슬랩(interval)을 반환
+  const interval &axis_interval(int n) const
+  {
+    if (n == 1)
+      return y;
+    if (n == 2)
+      return z;
+    return x;
+  };
 };
 
 #endif /* AABB_HPP */
