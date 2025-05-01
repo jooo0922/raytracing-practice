@@ -38,6 +38,13 @@ public:
     return x;
   }
 
+  // AABB - Ray 간 교차 검사 시, 부동소수점 오차로 인한 slab 경계선 스침(grazing hit) 누락을 방지하기 위해 AABB 를 구성하는 slab 를 살짝 확장하는 함수
+  interval expand(double delta) const
+  {
+    auto padding = delta / 2.0f;
+    return interval(min - padding, max + padding);
+  };
+
 public:
   // 자주 사용하게 될 ray 유효 범위를 정적 멤버변수로 미리 정의 -> 어디서든 쉽게 접근 및 사용 가능.
   static const interval empty;    // ray 비어있는 유효 범위 -> 유효 범위가 없음. 주로 유효 범위의 초기 상태로 사용.
