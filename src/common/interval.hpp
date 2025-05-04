@@ -14,6 +14,13 @@ public:
   interval() : min(+infinity), max(-infinity) {};
   interval(double min, double max) : min(min), max(max) {};
 
+  // 두 interval 을 감싸는(= 합친) 가장 작은 interval 생성
+  interval(const interval &a, const interval &b)
+  {
+    min = a.min <= b.min ? a.min : b.min;
+    max = a.max >= b.max ? a.max : b.max;
+  };
+
 public:
   // ray 유효 범위 간격 반환
   double size() const { return max - min; };
