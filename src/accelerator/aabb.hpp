@@ -31,6 +31,15 @@ public:
     x = (a[2] <= b[2]) ? interval(a[2], b[2]) : interval(b[2], a[2]);
   };
 
+  // 두 AABB 를 감싸는(= 합친) 가장 작은 AABB를 생성
+  aabb(const aabb &box0, const aabb &box1)
+  {
+    // 두 AABB 의 각 축별 슬랩을 합친다.
+    x = interval(box0.x, box1.x);
+    y = interval(box0.y, box1.y);
+    z = interval(box0.z, box1.z);
+  };
+
   // 지정한 축 인덱스(0:x, 1:y, 2:z)에 해당하는 슬랩(interval)을 반환
   const interval &axis_interval(int n) const
   {
