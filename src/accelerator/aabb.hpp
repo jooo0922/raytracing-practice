@@ -1,7 +1,7 @@
 #ifndef AABB_HPP
 #define AABB_HPP
 
-#include "rtweekend.hpp"
+#include "common/rtweekend.hpp"
 
 /**
  * 축 정렬 경계 박스(Axis-Aligned Bounding Box, AABB)를 정의하는 클래스
