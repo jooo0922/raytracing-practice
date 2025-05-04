@@ -32,6 +32,8 @@ public:
   void add(std::shared_ptr<hittable> object)
   {
     objects.push_back(object);
+    // 추가된 hittable 크기만큼 AABB 도 늘려나감.
+    bbox = aabb(bbox, object->bounding_box());
   };
 
   // scene 에 추가된 hittable object 순회하며 ray intersection 검사
@@ -61,10 +63,16 @@ public:
     return hit_anything;
   };
 
+  // 하위 자식 hittable 객체들의 AABB 반환 함수
+  aabb bounding_box() const override { return bbox; };
+
 public:
   // scene 에 hittable object 를 추가하는 컨테이너
   // -> RAII 패턴 기반 메모리 안정적 관리 및 예상치 못한 소멸자 호출 방지 등을 위해 hittable 객체를 std::shared_ptr 로 관리
   std::vector<std::shared_ptr<hittable>> objects;
+
+private:
+  aabb bbox; // 하위 자식 hittable 객체들을 모두 감싸는 AABB
 };
 
 #endif /* HITTABLE_LIST_HPP */
