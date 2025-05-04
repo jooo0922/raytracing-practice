@@ -2,6 +2,7 @@
 #define HITTABLE_HPP
 
 #include "common/rtweekend.hpp"
+#include "accelerator/aabb.hpp"
 
 /**
  * hit_record 클래스에 material 포인터 멤버변수를 정의해야 하는데,
@@ -41,6 +42,9 @@ public:
 
   // 충돌 함수를 순수 가상함수 인터페이스로 정의
   virtual bool hit(const ray &r, interval ray_t, hit_record &rec) const = 0;
+
+  // 현재 hittable 객체를 감싸는 AABB 를 반환하는 순수 가상함수 인터페이스 정의
+  virtual aabb bounding_box() const = 0;
 };
 
 /*
