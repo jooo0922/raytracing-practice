@@ -14,7 +14,13 @@ public:
    * 이동량(direction)은 (0,0,0)으로 설정하여 시간 변화에 영향을 받지 않게 함.
    */
   sphere(point3 static_center, double _radius, std::shared_ptr<material> _mat)
-      : center(static_center, vec3(0.0f, 0.0f, 0.0f)), radius(_radius), mat(_mat) {}
+      : center(static_center, vec3(0.0f, 0.0f, 0.0f)), radius(_radius), mat(_mat)
+  {
+    // 구체의 반지름을 각 축으로 확장한 벡터
+    auto rvec = vec3(radius, radius, radius);
+    // 정적 구체의 AABB 생성
+    bbox = aabb(static_center - rvec, static_center + rvec);
+  };
 
   /**
    * 동적 구체(Moving Sphere) 생성자
@@ -74,11 +80,15 @@ public:
     return true;
   }
 
+  // 구체의 AABB 반환 함수
+  aabb bounding_box() const override { return bbox; };
+
 private:
   // 구체를 정의하는 데이터를 private 멤버변수로 정의
   ray center;                    // 구체의 중심점 -> 시간에 따라 중심 위치를 계산하기 위해 point3 대신 ray로 저장함
   double radius;                 // 구체의 반지름 멤버변수
   std::shared_ptr<material> mat; // 구체에 충돌한 ray 의 산란 계산 시 적용할 material 포인터 멤버변수(reference counting 기반 smart pointer 로 객체 수명 관리)
+  aabb bbox;                     // 구체를 감싸는 AABB
 };
 
 /**
