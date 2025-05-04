@@ -41,6 +41,9 @@ public:
     return hit_left || hit_right;
   };
 
+  // 현재 노드의 AABB 반환 함수
+  aabb bounding_box() const override { return bbox; };
+
 private:
   std::shared_ptr<hittable> left;  // 좌측 서브트리 또는 리프 노드(실제 primitive 객체(ex> sphere))
   std::shared_ptr<hittable> right; // 우측 서브트리 또는 리프 노드(실제 primitive 객체(ex> sphere))
