@@ -30,7 +30,18 @@ public:
    * ray.time()에 따라 구체의 중심 위치를 계산 가능.
    */
   sphere(point3 center1, point3 center2, double _radius, std::shared_ptr<material> _mat)
-      : center(center1, center2 - center1), radius(_radius), mat(_mat) {}
+      : center(center1, center2 - center1), radius(_radius), mat(_mat)
+  {
+    // 구체의 반지름을 각 축으로 확장한 벡터
+    auto rvec = vec3(radius, radius, radius);
+
+    // time = 0.0f 시점과 time = 1.0f 시점에서의 동적 구체의 위치에 따라 각각의 AABB 계산
+    aabb box1(center.at(0.0f) - rvec, center.at(0.0f) + rvec);
+    aabb box2(center.at(1.0f) - rvec, center.at(1.0f) + rvec);
+
+    // 두 시간 구간에서의 AABB 를 모두 포함하는 AABB 로 동적 구체의 bbox 초기화
+    bbox = aabb(box1, box2);
+  };
 
   // 순수 가상 함수 hit 재정의(override)
   bool hit(const ray &r, interval ray_t, hit_record &rec) const override
