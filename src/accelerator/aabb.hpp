@@ -104,6 +104,21 @@ public:
     return true;
   };
 
+  // 가장 긴 축의 슬랩 인덱스를 반환하는 함수 (0: x, 1: y, 2: z)
+  // -> BVH 분할 시, 가장 긴 축을 기준으로 정렬하여 공간 분할 품질을 높이기 위함
+  int longest_axis() const
+  {
+    // x, y, z 축 슬랩 길이 중 가장 큰 축의 인덱스를 반환
+    if (x.size() > y.size())
+    {
+      return x.size() > z.size() ? 0 : 2;
+    }
+    else
+    {
+      return y.size() > z.size() ? 1 : 2;
+    }
+  };
+
   // AABB 의 특수 상수 객체 선언
   static const aabb empty;    // 아무것도 감싸지 않는 최소 AABB
   static const aabb universe; // 모든 공간을 감싸는 무한한 AABB
