@@ -24,8 +24,17 @@ public:
   // hittable 객체 컨테이너 내에서 start ~ end 구간을 BVH 노드로 재귀 분할하는 생성자
   bvh_node(std::vector<std::shared_ptr<hittable>> &objects, size_t start, size_t end)
   {
-    // 0(X), 1(Y), 2(Z) 중 무작위로 축을 선택하여 해당 축을 기준으로 hittable 객체 리스트 정렬
-    int axis = random_int(0, 2);
+    // 현재 BVH 노드의 bounding box 누적 계산할 AABB 초기화
+    bbox = aabb::empty;
+
+    // 전체 hittable 객체 리스트를 돌면서 현재 BVH 노드를 감싸야 하는 AABB 계산
+    for (size_t object_index = start; object_index < end; object_index++)
+    {
+      bbox = aabb(bbox, objects[object_index]->bounding_box());
+    }
+
+    // 현재 BVH 노드 AABB 슬랩 중 가장 긴 축(x, y, z 중)을 기준으로 선택 → 더 공간적으로 효과적인 분할을 위함 (하단 필기 참고)
+    int axis = bbox.longest_axis();
 
     // 선택된 축에 따라 AABB 슬랩 min 값 기준 비교 함수 설정 (std::sort에 사용됨)
     auto comparator = (axis == 0)   ? box_x_compare
@@ -154,6 +163,25 @@ private:
  * 전체 오브젝트에 대해 선형 검색하지 않고도 효율적인 교차 판정을 가능하게 한다.
  *
  * 이러한 최적화는 수천~수백만 개의 오브젝트를 처리하는 레이트레이서의 성능을 좌우한다.
+ */
+
+/**
+ * 📌 Why splitting along the longest axis improves BVH performance
+ *
+ *
+ * BVH 트리의 각 노드를 구성할 때, 가장 긴 축을 기준으로 분할하면 다음과 같은 장점이 있음:
+ *
+ * 1. 🎯 공간 분할의 품질이 높아짐:
+ *    - 긴 축을 따라 정렬 및 분할하면, 좌/우 자식 노드의 AABB 가 덜 겹치고, 더 명확하게 분리됨
+ *    - 이는 광선(ray)이 자식 노드 AABB 중 한 쪽만 통과하게 되는 경우를 더 많이 만들어냄
+ *
+ * 2. 🚀 불필요한 hit() 연산 감소:
+ *    - 덜 겹치는 bounding box는 BVH 탐색 시 더 많은 노드를 '건너뛸 수 있는' 기회를 줌
+ *
+ * 3. 🔄 트리 균형 향상:
+ *    - 축 방향 데이터 분포에 맞춰 나누면, 전체 트리 깊이가 줄어들고 탐색 효율이 증가함
+ *
+ * 그 결과, 더 빠른 렌더링 속도를 얻을 수 있으며, 저자의 실험에서는 약 18% 성능 향상을 보임.
  */
 
 #endif /* BVH_NODE_HPP */
