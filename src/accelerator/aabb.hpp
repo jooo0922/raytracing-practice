@@ -103,7 +103,17 @@ public:
     }
     return true;
   };
+
+  // AABB 의 특수 상수 객체 선언
+  static const aabb empty;    // 아무것도 감싸지 않는 최소 AABB
+  static const aabb universe; // 모든 공간을 감싸는 무한한 AABB
 };
+
+// 비어 있는 AABB 정의 -> 누적 bounding box 계산 시 초기값으로 사용
+const aabb aabb::empty = aabb(interval::empty, interval::empty, interval::empty);
+
+// 무한한 AABB 정의 -> 어떤 AABB와 비교해도 포함되도록 만들기 위해 사용
+const aabb aabb::universe = aabb(interval::universe, interval::universe, interval::universe);
 
 /**
  * aabb::hit()
