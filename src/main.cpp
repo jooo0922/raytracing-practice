@@ -1,4 +1,5 @@
 #include "common/rtweekend.hpp" // common header 최상단에 가장 먼저 include (관련 필기 하단 참고)
+#include "accelerator/bvh_node.hpp"
 #include "core/camera.hpp"
 #include "core/material.hpp"
 #include "hittable/hittable.hpp"
@@ -83,6 +84,9 @@ int main(int argc, char *argv[])
 
   auto material3 = std::make_shared<metal>(color(0.7f, 0.6f, 0.5f), 0.0f);
   world.add(std::make_shared<sphere>(point3(4.0f, 1.0f, 0.0f), 1.0f, material3));
+
+  // 현재 world 내의 hittable 객체들을 가지고서 BVH 트리를 구축함.
+  world = hittable_list(std::make_shared<bvh_node>(world));
 
   /** camera 객체 생성 및 이미지 렌더링 수행 */
   camera cam;
