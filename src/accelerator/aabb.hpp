@@ -27,8 +27,8 @@ public:
   {
     // a와 b 중 누가 min/max인지는 상관없이, 자동으로 각 축별 슬랩(interval)을 생성
     x = (a[0] <= b[0]) ? interval(a[0], b[0]) : interval(b[0], a[0]);
-    x = (a[1] <= b[1]) ? interval(a[1], b[1]) : interval(b[1], a[1]);
-    x = (a[2] <= b[2]) ? interval(a[2], b[2]) : interval(b[2], a[2]);
+    y = (a[1] <= b[1]) ? interval(a[1], b[1]) : interval(b[1], a[1]);
+    z = (a[2] <= b[2]) ? interval(a[2], b[2]) : interval(b[2], a[2]);
   };
 
   // 두 AABB 를 감싸는(= 합친) 가장 작은 AABB를 생성
@@ -164,4 +164,4 @@ const aabb aabb::universe = aabb(interval::universe, interval::universe, interva
  *     광선이 AABB를 통과했다고 본다.
  */
 
-#endif /* AABB_HPP */
+#endif/* AABB_HPP */
