@@ -5,6 +5,8 @@
 #include "hittable/hittable.hpp"
 #include "hittable/hittable_list.hpp"
 
+#include <algorithm>
+
 /**
  * BVH 노드를 나타내는 클래스
  *
@@ -20,8 +22,52 @@ public:
       : bvh_node(list.objects, 0, list.objects.size()) {};
 
   // hittable 객체 컨테이너 내에서 start ~ end 구간을 BVH 노드로 재귀 분할하는 생성자
-  bvh_node(std::vector<std::shared_ptr<hittable>> &objects, size_t start, size_t end) {
-    // To be implemented later.
+  bvh_node(std::vector<std::shared_ptr<hittable>> &objects, size_t start, size_t end)
+  {
+    // 0(X), 1(Y), 2(Z) 중 무작위로 축을 선택하여 해당 축을 기준으로 hittable 객체 리스트 정렬
+    int axis = random_int(0, 2);
+
+    // 선택된 축에 따라 AABB 슬랩 min 값 기준 비교 함수 설정 (std::sort에 사용됨)
+    auto comparator = (axis == 0)   ? box_x_compare
+                      : (axis == 1) ? box_y_compare
+                                    : box_z_compare;
+
+    // 현재 BVH 노드에 들어온 hittable 객체 수 계산
+    size_t object_span = end - start;
+
+    if (object_span == 1)
+    {
+      // 객체가 1개일 경우:
+      /**
+       * BVH의 재귀 종료 지점이므로 left/right 모두 동일한 객체를 가리키도록 함
+       *
+       * -> why? 모든 서브트리 포인터가 채워져 있어야
+       * BVH 탐색 시 null pointer를 체크하지 않고도
+       * 항상 left와 right를 대상으로 hit()을 호출할 수 있기 때문.
+       */
+      left = right = objects[start];
+    }
+    else if (object_span == 2)
+    {
+      // 객체가 2개일 경우: 둘을 각각 left, right로 할당
+      left = objects[start];
+      right = objects[start + 1];
+    }
+    else
+    {
+      // 객체가 3개 이상일 경우:
+      // 1. 선택된 축 기준으로 AABB.min 값 기준 정렬 수행
+      std::sort(std::begin(objects) + start, std::begin(objects) + end, comparator);
+
+      // 2. 정렬된 리스트를 중간에서 나눠서 두 서브트리로 재귀 구성
+      // -> std::make_shared<bvh_node>(...) 를 호출하는 순간 현재의 생성자 함수가 다시 재귀 호출됨!
+      auto mid = start + object_span / 2;
+      left = std::make_shared<bvh_node>(objects, start, mid);
+      right = std::make_shared<bvh_node>(objects, mid, end);
+    }
+
+    // 현재 노드의 bounding box는 left/right 서브트리의 bounding box를 감싼(= 합친) AABB
+    bbox = aabb(left->bounding_box(), right->bounding_box());
   };
 
   // 광선과의 교차 여부 검사
