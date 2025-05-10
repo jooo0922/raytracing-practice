@@ -74,9 +74,6 @@ public:
       left = std::make_shared<bvh_node>(objects, start, mid);
       right = std::make_shared<bvh_node>(objects, mid, end);
     }
-
-    // 현재 노드의 bounding box는 left/right 서브트리의 bounding box를 감싼(= 합친) AABB
-    bbox = aabb(left->bounding_box(), right->bounding_box());
   };
 
   // 광선과의 교차 여부 검사
