@@ -48,6 +48,37 @@ private:
   std::shared_ptr<hittable> left;  // 좌측 서브트리 또는 리프 노드(실제 primitive 객체(ex> sphere))
   std::shared_ptr<hittable> right; // 우측 서브트리 또는 리프 노드(실제 primitive 객체(ex> sphere))
   aabb bbox;                       // 현재 BVH 노드를 감싸는 AABB
+
+private:
+  /**
+   * 주어진 두 hittable 객체의 AABB에서 axis_index 축 방향 슬랩(interval)의 최소값(min)을 기준으로
+   * 오름차순 정렬을 위해 정의한 비교 함수 (std::sort에서 사용)
+   */
+  static bool box_compare(
+      const std::shared_ptr<hittable> a, const std::shared_ptr<hittable> b, int axis_index)
+  {
+    auto a_axis_interval = a->bounding_box().axis_interval(axis_index);
+    auto b_axis_interval = b->bounding_box().axis_interval(axis_index);
+    return a_axis_interval.min < b_axis_interval.min;
+  };
+
+  // 두 hittable 객체 AABB 의 x축 슬랩을 기준으로 오름차순 정렬하기 위해 정의한 비교 함수
+  static bool box_x_compare(const std::shared_ptr<hittable> a, const std::shared_ptr<hittable> b)
+  {
+    return box_compare(a, b, 0);
+  };
+
+  // 두 hittable 객체 AABB 의 y축 슬랩을 기준으로 오름차순 정렬하기 위해 정의한 비교 함수
+  static bool box_y_compare(const std::shared_ptr<hittable> a, const std::shared_ptr<hittable> b)
+  {
+    return box_compare(a, b, 1);
+  };
+
+  // 두 hittable 객체 AABB 의 z축 슬랩을 기준으로 오름차순 정렬하기 위해 정의한 비교 함수
+  static bool box_z_compare(const std::shared_ptr<hittable> a, const std::shared_ptr<hittable> b)
+  {
+    return box_compare(a, b, 2);
+  };
 };
 
 /**
