@@ -32,6 +32,12 @@ inline double random_double(double min, double max)
   return min + (max - min) * random_double();
 };
 
+inline int random_int(int min, int max)
+{
+  // min <= n < max 사이의 정수인 난수 생성
+  return int(random_double(min, max + 1));
+};
+
 // common
 #include "color.hpp"
 #include "interval.hpp"
