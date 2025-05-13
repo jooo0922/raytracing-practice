@@ -3,6 +3,7 @@
 
 #include "common/rtweekend.hpp"
 #include "hittable/hittable.hpp"
+#include "texture.hpp"
 
 /**
  * material 추상 클래스
@@ -24,7 +25,10 @@ public:
 class lambertian : public material
 {
 public:
-  lambertian(const color &albedo) : albedo(albedo) {};
+  // 단색 고정 텍스쳐 지원 -> albedo 색상을 고정 텍스쳐로 표현 가능
+  lambertian(const color &albedo) : tex(std::make_shared<solid_color>(albedo)) {};
+  // 일반 텍스쳐 지원 -> 임의의 텍스쳐를 lambertian material 에 적용 가능
+  lambertian(std::shared_ptr<texture> tex) : tex(tex) {};
 
   // Lambertian(diffuse) reflectance 산란 동작 재정의
   bool scatter(const ray &r_in, const hit_record &rec, color &attenuation, ray &scattered) const override
@@ -41,7 +45,8 @@ public:
     scattered = ray(rec.p, scatter_direction, r_in.time());
 
     // 입자에 흡수(감쇄)되고 남은 난반사(albedo)를 충돌한 ray 산란(반사)될 때의 attenuation 값으로 할당.
-    attenuation = albedo;
+    // lambertian material 이 텍스쳐를 지원함에 따라 모든 albedo 색상은 texture 클래스로부터 lookup(참조)
+    attenuation = tex->value(rec.u, rec.v, rec.p);
 
     // (일정 확률로)산란할 ray 생성에 성공했다면 true 반환
     // TODO : 추후 일정 확률로 ray 를 산란하지 않고 모두 흡수해버리는 코드도 추가될 수 있음.
@@ -49,7 +54,7 @@ public:
   };
 
 private:
-  color albedo; // 난반사되는 물체의 색상값
+  std::shared_ptr<texture> tex; // lambertian material 에 적용할 텍스쳐
 };
 
 /**
