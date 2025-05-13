@@ -2,6 +2,7 @@
 #include "accelerator/bvh_node.hpp"
 #include "core/camera.hpp"
 #include "core/material.hpp"
+#include "core/texture.hpp"
 #include "hittable/hittable.hpp"
 #include "hittable/hittable_list.hpp"
 #include "hittable/sphere.hpp"
@@ -30,7 +31,9 @@ int main(int argc, char *argv[])
   hittable_list world;
 
   /** 각 Hittable 객체에 적용할 재질(Material)을 shared_ptr로 생성하여 공유 가능하도록 관리 */
-  auto ground_material = std::make_shared<lambertian>(color(0.5f, 0.5f, 0.5f));
+  // checker texture 생성 후 ground_material 에 적용
+  auto checker = std::make_shared<checker_texture>(0.32f, color(0.2f, 0.3f, 0.1f), color(0.9f, 0.9f, 0.9f));
+  auto ground_material = std::make_shared<lambertian>(checker);
   world.add(std::make_shared<sphere>(point3(0.0f, -1000.0f, -1.0f), 1000.0f, ground_material)); // 반지름이 1000 인 지면 sphere 추가
 
   /** 484개(= 22 * 22)의 소형 sphere 생성 후 world 에 추가 */
@@ -94,7 +97,7 @@ int main(int argc, char *argv[])
   // 주요 이미지 파라미터 설정
   cam.image_width = 400;
   cam.aspect_ratio = 16.0f / 9.0f;
-  cam.samples_per_pixel = 100;
+  cam.samples_per_pixel = 50;
   cam.max_depth = 20;
 
   // camera transform 관련 파라미터 설정
