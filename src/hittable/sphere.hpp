@@ -95,6 +95,21 @@ public:
   aabb bounding_box() const override { return bbox; };
 
 private:
+  // 중심이 원점이고 반지름이 1인 단위 구 위의 점 p(= 데카르트 좌표계)를 구면 좌표계로 변환 후, (u, v) 텍스쳐 좌표 [0, 1] 범위로 맵핑해주는 함수
+  static void get_sphere_uv(const point3 &p, double &u, double &v)
+  {
+    // 고도각 θ: 아래쪽 극점(-Y)에서 위로 향하는 각도, acos(-y) → [0, π] 범위
+    auto theta = std::acos(-p.y());
+    // 방위각 ϕ: +X축 기준 반시계 방향 회전 각도, atan2(-z, x) + π → [0, 2π] 범위
+    auto phi = std::atan2(-p.z(), p.x()) + pi;
+
+    // u: 방위각 ϕ를 [0, 2π] → [0, 1]로 정규화하여 u좌표값 계산
+    u = phi / (2.0f * pi);
+    // v: 고도각 θ를 [0, π] → [0, 1]로 정규화하여 v좌표값 계산
+    v = theta / pi;
+  };
+
+private:
   // 구체를 정의하는 데이터를 private 멤버변수로 정의
   ray center;                    // 구체의 중심점 -> 시간에 따라 중심 위치를 계산하기 위해 point3 대신 ray로 저장함
   double radius;                 // 구체의 반지름 멤버변수
