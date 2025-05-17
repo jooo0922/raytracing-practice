@@ -33,6 +33,12 @@ endif()
 # Directories
 # ----------------------------------------------------------------------------
 set(SRC_DIR "${CMAKE_SOURCE_DIR}/src")
+set(CMAKE_DIR "${CMAKE_SOURCE_DIR}/_cmake")
+
+# ----------------------------------------------------------------------------
+# subs cmake (dependency library)
+# ----------------------------------------------------------------------------
+include(${CMAKE_DIR}/stb.cmake)
 
 # ----------------------------------------------------------------------------
 # files
@@ -41,4 +47,9 @@ add_executable(${TARGET_NAME}
 
   # current main
   ${SRC_DIR}/main.cpp
+)
+
+target_include_directories(${TARGET_NAME}
+  PRIVATE
+  ${stb_INCLUDE}
 )
