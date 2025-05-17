@@ -85,6 +85,7 @@ public:
     rec.p = r.at(rec.t);                                     // 충돌 지점의 좌표값 계산
     vec3 outward_normal = (rec.p - current_center) / radius; // 구체 표면 상에서 충돌 지점의 정규화된 normal 계산
     rec.set_face_normal(r, outward_normal);                  // ray 위치와 그에 따른 충돌 지점의 normal 재계산
+    get_sphere_uv(outward_normal, rec.u, rec.v);             // 단위 구 기준 충돌 지점을 구면 좌표계로 변환하여 (u,v) 텍스처 좌표 계산
     rec.mat = mat;                                           // ray 충돌 지점에서 산란 계산 시 적용할 material 포인터 복사
 
     // 반직선 유효범위 내의 비율값 t가 존재한다면, 구체와 반직선의 충돌 지점이 존재하는 것으로 판단하여 true 반환
