@@ -7,26 +7,9 @@
 #include "hittable/hittable_list.hpp"
 #include "hittable/sphere.hpp"
 
-int main(int argc, char *argv[])
+// bouncing spheres scene 렌더링 함수
+void bouncing_spheres(std::ofstream &output_file)
 {
-  /** 명령줄 인수로 출력 파일(= .ppm 이미지 파일) 경로 전달받기 */
-  // 기본 출력 파일 경로 지정
-  std::string output_path = "output/image.ppm";
-  if (argc > 1)
-  {
-    output_path = argv[1];
-  }
-
-  /** 전달받은 경로에 .ppm 이미지 파일 생성 및 열기 */
-  // '파일 생성 및 쓰기' 해야 하므로 std::ofstream 사용 (기존 파일 읽기 시 std::ifstream)
-  std::ofstream output_file(output_path);
-  if (!output_file)
-  {
-    // 파일 생성 및 열기 실패 처리
-    fprintf(stderr, "Error: could not open file %s for writing.\n", output_path.c_str());
-    return 1;
-  }
-
   /** world(scene) 역할을 수행하는 hittable_list 생성 및 hittable object 추가 */
   hittable_list world;
 
@@ -112,6 +95,29 @@ int main(int argc, char *argv[])
 
   // 카메라 및 viewport 파라미터 내부에서 자동 초기화 후 .ppm 이미지 렌더링
   cam.render(output_file, world);
+}
+
+int main(int argc, char *argv[])
+{
+  /** 명령줄 인수로 출력 파일(= .ppm 이미지 파일) 경로 전달받기 */
+  // 기본 출력 파일 경로 지정
+  std::string output_path = "output/image.ppm";
+  if (argc > 1)
+  {
+    output_path = argv[1];
+  }
+
+  /** 전달받은 경로에 .ppm 이미지 파일 생성 및 열기 */
+  // '파일 생성 및 쓰기' 해야 하므로 std::ofstream 사용 (기존 파일 읽기 시 std::ifstream)
+  std::ofstream output_file(output_path);
+  if (!output_file)
+  {
+    // 파일 생성 및 열기 실패 처리
+    fprintf(stderr, "Error: could not open file %s for writing.\n", output_path.c_str());
+    return 1;
+  }
+
+  bouncing_spheres(output_file);
 
   output_file.close();
 
