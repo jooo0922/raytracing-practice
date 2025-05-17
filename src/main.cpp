@@ -97,6 +97,41 @@ void bouncing_spheres(std::ofstream &output_file)
   cam.render(output_file, world);
 }
 
+// checkered spheres scene 렌더링 함수
+void checkered_spheres(std::ofstream &output_file)
+{
+  /** world(scene) 역할을 수행하는 hittable_list 생성 및 hittable object 추가 */
+  hittable_list world;
+
+  /** 각 Hittable 객체에 적용할 재질(Material)을 shared_ptr로 생성하여 공유 가능하도록 관리 */
+  // checker texture 생성 후 lambertian material 에 적용
+  auto checker = std::make_shared<checker_texture>(0.32f, color(0.2f, 0.3f, 0.1f), color(0.9f, 0.9f, 0.9f));
+  // 반지름이 10 인 두 checkered sphere 추가
+  world.add(std::make_shared<sphere>(point3(0.0f, -10.0f, 0.0f), 10.0f, std::make_shared<lambertian>(checker)));
+  world.add(std::make_shared<sphere>(point3(0.0f, 10.0f, 0.0f), 10.0f, std::make_shared<lambertian>(checker)));
+
+  /** camera 객체 생성 및 이미지 렌더링 수행 */
+  camera cam;
+
+  // 주요 이미지 파라미터 설정
+  cam.image_width = 400;
+  cam.aspect_ratio = 16.0f / 9.0f;
+  cam.samples_per_pixel = 50;
+  cam.max_depth = 20;
+
+  // camera transform 관련 파라미터 설정
+  cam.vfov = 20.0f;
+  cam.lookfrom = point3(13.0f, 2.0f, 3.0f);
+  cam.lookat = point3(0.0f, 0.0f, 0.0f);
+  cam.vup = vec3(0.0f, 1.0f, 0.0f);
+
+  // defocus blur 관련 파라미터 성정
+  cam.defocus_angle = 0.0f;
+
+  // 카메라 및 viewport 파라미터 내부에서 자동 초기화 후 .ppm 이미지 렌더링
+  cam.render(output_file, world);
+};
+
 int main(int argc, char *argv[])
 {
   /** 명령줄 인수로 출력 파일(= .ppm 이미지 파일) 경로 전달받기 */
@@ -117,7 +152,16 @@ int main(int argc, char *argv[])
     return 1;
   }
 
-  bouncing_spheres(output_file);
+  // switch 문으로 렌더링을 원하는 장면 선택 가능
+  switch (2)
+  {
+  case 1:
+    bouncing_spheres(output_file);
+    break;
+  case 2:
+    checkered_spheres(output_file);
+    break;
+  }
 
   output_file.close();
 
