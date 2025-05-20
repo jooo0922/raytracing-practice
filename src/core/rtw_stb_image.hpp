@@ -88,6 +88,18 @@ public:
     return true;
   };
 
+  // 로드된 이미지 너비 반환 (로딩 실패 시 0)
+  int width() const
+  {
+    return (fdata == nullptr) ? 0 : image_width;
+  };
+
+  // 로드된 이미지 높이 반환 (로딩 실패 시 0)
+  int height() const
+  {
+    return (fdata == nullptr) ? 0 : image_height;
+  };
+
 private:
   // fdata(32-bit float) → bdata(8-bit RGB)로 변환
   // .ppm 파일로 출력하기 위해 [0.0, 1.0] float 색상값을 [0, 255] 정수로 변환 (color.hpp 참고)
