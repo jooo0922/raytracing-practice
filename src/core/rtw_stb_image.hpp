@@ -64,10 +64,25 @@ public:
     std::cerr << "ERROR: Could not load image file '" << image_filename << "'\n";
   };
 
+  // 소멸자: 동적 할당된 이미지 데이터 메모리 해제
+  ~rtw_image()
+  {
+    delete[] bdata;   // 8-bit RGB 데이터 메모리 해제
+    STBI_FREE(fdata); // stb_image에서 할당한 float 데이터 메모리 해제
+  }
+
   // 주어진 파일 경로로부터 이미지 로드 (float 포맷으로)
   bool load(const std::string &filename) {
 
   };
+
+private:
+  const int bytes_per_pixel = 3;  // 픽셀당 바이트 수 (RGB → 3바이트)
+  float *fdata = nullptr;         // 선형 색공간 float 이미지 데이터 ([0.0, 1.0] 범위)
+  unsigned char *bdata = nullptr; // 변환된 8-bit RGB 데이터 ([0, 255] 범위)
+  int image_width = 0;            // 로드된 이미지 너비
+  int image_height = 0;           // 로드된 이미지 높이
+  int bytes_per_scanline = 0;     // 로드된 이미지 한 줄(scanline) 당 바이트 수 = image_width * bytes_per_pixel
 };
 
 // MSVC 컴파일러 warning 비활성화 복구
