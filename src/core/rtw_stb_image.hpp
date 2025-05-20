@@ -72,7 +72,26 @@ public:
   }
 
   // 주어진 파일 경로로부터 이미지 로드 (float 포맷으로)
-  bool load(const std::string &filename) {
+  bool load(const std::string &filename)
+  {
+    // stbi_loadf()를 통해 float 선형 색공간 이미지 데이터 ([0.0, 1.0] 범위) 로딩
+    auto n = bytes_per_pixel; // 로드할 원본 이미지 채널 수 (출력은 RGB 3채널로 고정)
+    fdata = stbi_loadf(filename.c_str(), &image_width, &image_height, &n, bytes_per_pixel);
+    if (fdata == nullptr)
+      return false;
+
+    // 이미지 한 줄의 바이트 수 계산 (이미지 폭 × 픽셀당 바이트 수)
+    bytes_per_scanline = image_width * bytes_per_pixel;
+
+    // 32-bit float 데이터 → 8-bit RGB 변환
+    converto_to_bytes();
+    return true;
+  };
+
+private:
+  // fdata(32-bit float) → bdata(8-bit RGB)로 변환
+  // .ppm 파일로 출력하기 위해 [0.0, 1.0] float 색상값을 [0, 255] 정수로 변환 (color.hpp 참고)
+  void converto_to_bytes() {
 
   };
 
