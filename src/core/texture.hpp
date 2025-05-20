@@ -2,6 +2,7 @@
 #define TEXTURE_HPP
 
 #include "common/rtweekend.hpp"
+#include "rtw_stb_image.hpp"
 
 /**
  * texture 추상 클래스
