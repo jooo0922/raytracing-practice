@@ -100,7 +100,39 @@ public:
     return (fdata == nullptr) ? 0 : image_height;
   };
 
+  // 이미지 상에서 (x,y) 위치의 8-bit RGB 픽셀 데이터 포인터 반환
+  const unsigned char *pixel_data(int x, int y) const
+  {
+    // 로드된 이미지가 없으면 fallback: 마젠타 색상 -> Unity 엔진에서도 asset loading 에러 시 마젠타 색상 출력
+    static unsigned char magenta[] = {255, 0, 255};
+    if (bdata == nullptr)
+    {
+      return magenta;
+    }
+
+    // 픽셀 데이터를 읽고자 하는 좌표값을 이미지 범위 내로 clamp
+    x = clamp(x, 0, image_width);
+    y = clamp(y, 0, image_height);
+
+    // 8-bit RGB 이미지 버퍼 시작 주소값(bdata) 에서 (x, y)의 시작 위치 계산 후 포인터 반환
+    return bdata + y * bytes_per_scanline + x * bytes_per_pixel;
+  };
+
 private:
+  // 정수 값 x 를 [low, high] 범위로 clamp
+  static int clamp(int x, int low, int high)
+  {
+    if (x < low)
+    {
+      return low;
+    }
+    if (x < high)
+    {
+      return x;
+    }
+    return high - 1;
+  }
+
   // float(0.0 ~ 1.0)을 8-bit RGB 값(0~255)로 변환
   static unsigned char float_to_byte(float value)
   {
