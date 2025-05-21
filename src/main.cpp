@@ -132,6 +132,37 @@ void checkered_spheres(std::ofstream &output_file)
   cam.render(output_file, world);
 };
 
+// earth scene 렌더링 함수
+void earth(std::ofstream &output_file)
+{
+  // earthmap.jpg 이미지 로드 및 적용을 위해 image_texture 생성 후 lambertian material 에 적용
+  auto earth_texture = std::make_shared<image_texture>("earthmap.jpg");
+  auto earth_surface = std::make_shared<lambertian>(earth_texture);
+  // 반지름이 2 인 glob sphere 생성
+  auto globe = std::make_shared<sphere>(point3(0.0f, 0.0f, 0.0f), 2.0f, earth_surface);
+
+  /** camera 객체 생성 및 이미지 렌더링 수행 */
+  camera cam;
+
+  // 주요 이미지 파라미터 설정
+  cam.image_width = 400;
+  cam.aspect_ratio = 16.0f / 9.0f;
+  cam.samples_per_pixel = 100;
+  cam.max_depth = 50;
+
+  // camera transform 관련 파라미터 설정
+  cam.vfov = 20.0f;
+  cam.lookfrom = point3(0.0f, 0.0f, 12.0f);
+  cam.lookat = point3(0.0f, 0.0f, 0.0f);
+  cam.vup = vec3(0.0f, 1.0f, 0.0f);
+
+  // defocus blur 관련 파라미터 성정
+  cam.defocus_angle = 0.0f;
+
+  // 카메라 및 viewport 파라미터 내부에서 자동 초기화 후 .ppm 이미지 렌더링
+  cam.render(output_file, hittable_list(globe));
+};
+
 int main(int argc, char *argv[])
 {
   /** 명령줄 인수로 출력 파일(= .ppm 이미지 파일) 경로 전달받기 */
@@ -153,13 +184,16 @@ int main(int argc, char *argv[])
   }
 
   // switch 문으로 렌더링을 원하는 장면 선택 가능
-  switch (2)
+  switch (3)
   {
   case 1:
     bouncing_spheres(output_file);
     break;
   case 2:
     checkered_spheres(output_file);
+    break;
+  case 3:
+    earth(output_file);
     break;
   }
 
