@@ -84,6 +84,43 @@ private:
 };
 
 /**
+ * 이미지 기반 텍스쳐 클래스 정의
+ * -> rtw_image 클래스로부터 로드된 이미지 데이터 적용
+ */
+class image_texture : public texture
+{
+public:
+  image_texture(const char *filename) : image(filename) {};
+
+  // 입력된 uv 좌표값으로 로드된 이미지의 픽셀 데이터를 읽어서 반환
+  color value(double u, double v, const point3 &p) const override
+  {
+    // 로드된 이미지가 없으면 디버깅을 위해 cyan 색상 반환
+    if (image.height() <= 0)
+    {
+      return color(0.0f, 1.0f, 1.0f);
+    }
+
+    // [0.0, 1.0] 범위 내로 uv 좌표값 clamping
+    u = interval(0.0f, 1.0f).clamp(u);
+    // uv 좌표계와 이미지 좌표계의 수직 방향(v축)이 서로 반대이므로 v 좌표를 뒤집어 줌.
+    v = 1.0f - interval(0.0f, 1.0f).clamp(v);
+
+    // uv 좌표를 정수형 이미지 픽셀 좌표로 casting 하여 픽셀 데이터를 읽어온다.
+    auto i = int(u * image.width());
+    auto j = int(v * image.height());
+    auto pixel = image.pixel_data(i, j);
+
+    // rtw_image 에서 읽어온 8-bit RGB 픽셀 데이터([0, 255])를 [0.0f, 1.0f] 범위의 float 색상값으로 반환
+    auto color_scale = 1.0f / 255.0f;
+    return color(color_scale * pixel[0], color_scale * pixel[1], color_scale * pixel[2]);
+  };
+
+private:
+  rtw_image image; // stb_image 라이브러리를 래핑하여 이미지 데이터 로드, 변환, 읽기 등을 처리하는 헬퍼 클래스 멤버
+};
+
+/**
  * solid_color 텍스처
  *
  *
