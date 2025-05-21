@@ -84,7 +84,7 @@ public:
     bytes_per_scanline = image_width * bytes_per_pixel;
 
     // 32-bit float 데이터 → 8-bit RGB 변환
-    converto_to_bytes();
+    convert_to_bytes();
     return true;
   };
 
@@ -101,10 +101,39 @@ public:
   };
 
 private:
+  // float(0.0 ~ 1.0)을 8-bit RGB 값(0~255)로 변환
+  static unsigned char float_to_byte(float value)
+  {
+    // [0.0, 1.0] 범위를 벗어나는 값에 대해 최소 0, 최대 255로 clamping
+    if (value <= 0.0f)
+    {
+      return 0;
+    }
+    if (value >= 1.0f)
+    {
+      return 255;
+    }
+    // [0.0f, 1.0f] float 을 [0, 255] 범위의 8-bit RGB 값으로 변환 (소수점 버림(truncation) 처리)
+    return static_cast<unsigned char>(256.0f * value);
+  }
+
   // fdata(32-bit float) → bdata(8-bit RGB)로 변환
   // .ppm 파일로 출력하기 위해 [0.0, 1.0] float 색상값을 [0, 255] 정수로 변환 (color.hpp 참고)
-  void converto_to_bytes() {
+  void convert_to_bytes()
+  {
+    // 전체 픽셀 수 × 3 (R,G,B) 만큼 bdata 메모리 할당
+    int total_bytes = image_width * image_height * bytes_per_pixel;
+    bdata = new unsigned char[total_bytes];
 
+    // 모든 float 값을 하나씩 8-bit RGB 를 구성하는 byte 로 변환하여 bdata에 저장
+    auto *bptr = bdata;
+    auto *fptr = fdata;
+    for (int i = 0; i < total_bytes; i++, fptr++, bptr++)
+    {
+      // float 포인터와 byte 포인터를 ++ 연산자로 각각 한 요소씩 메모리 블록 주소값을 이동시키며 RGB 값을 변환 및 복사
+      // 값을 덮어쓰기 위해 de-referencing 사용
+      *bptr = float_to_byte(*fptr);
+    }
   };
 
 private:
