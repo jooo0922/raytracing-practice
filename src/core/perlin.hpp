@@ -25,9 +25,33 @@ public:
   };
 
 private:
-  // x, y, z 축별 인덱스 배열을 받아서 무작위로 섞는 함수
-  static void perlin_generate_perm(int *p) {
+  // x, y, z 축별로 사용할 순열 테이블을 받아서 무작위로 섞는 함수
+  static void perlin_generate_perm(int *p)
+  {
+    // 아직 섞이지 않은 [0, 255] 사이의 순열 테이블 원본 생성
+    for (int i = 0; i < point_count; i++)
+    {
+      p[i] = i;
+    }
 
+    // 생성된 순열 테이블을 무작위로 섞는다.
+    permute(p, point_count);
+  };
+
+  // 순열 테이블을 무작위로 섞는 알고리즘 (Fisher–Yates shuffle 알고리즘 기반 배열 섞기)
+  static void permute(int *p, int n)
+  {
+    // 순열 테이블의 마지막 요소 -> 첫 번째 요소까지 순회하며 섞음.
+    for (int i = n - 1; i > 0; i--)
+    {
+      // [0, i] 중 하나의 인덱스 선택 (= 현재 순회 중인 요소의 앞쪽 요소들 중에서 무작위로 뽑음)
+      int target = random_int(0, i);
+
+      // 현재 순회 중인 요소와 앞쪽 요소의 위치를 교환한다.
+      int tmp = p[i];
+      p[i] = p[target];
+      p[target] = tmp;
+    }
   };
 
 private:
