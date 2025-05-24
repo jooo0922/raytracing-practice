@@ -24,6 +24,20 @@ public:
     perlin_generate_perm(perm_z);
   };
 
+  // 3차원 입력 좌표를 받아 해싱된 난수 테이블 인덱스를 통해 랜덤 float 값을 읽어 반환하는 함수
+  double noise(const point3 &p) const
+  {
+    // 3. 입력 좌표를 스케일하여 격자 해상도를 높이고 (하단 필기 참고)
+    //    정수 인덱스로 변환한 뒤 & 255 (bitwise AND 연산)를 통해 0~255 범위로 wrap-around (하단 필기 참고)
+    auto i = int(4 * p.x()) & 255;
+    auto j = int(4 * p.y()) & 255;
+    auto k = int(4 * p.z()) & 255;
+
+    // 4. 뒤섞인 각 순열 테이블에서 뽑은 값들을 bitwise XOR 해싱 → 0~255 범위 난수 테이블 인덱스 도출
+    //    → randfloat[]에서 해당 위치의 난수 반환
+    return randfloat[perm_x[i] ^ perm_y[j] ^ perm_z[k]];
+  };
+
 private:
   // x, y, z 축별로 사용할 순열 테이블을 받아서 무작위로 섞는 함수
   static void perlin_generate_perm(int *p)
@@ -63,5 +77,71 @@ private:
   int perm_y[point_count];
   int perm_z[point_count];
 };
+
+/**
+ * Perlin noise 알고리즘
+ *
+ *
+ * 1. randfloat[] : 256개의 고정된 난수 float 값 테이블 생성
+ *    - 단순한 white noise처럼 보이는 값들이지만, 이후 해싱을 통해 공간적으로 의미 있게 사용됨
+ *
+ * 2. perm_x, perm_y, perm_z[] : 축별로 무작위로 뒤섞인 순열 테이블
+ *    - 입력 좌표의 정수 인덱스를 기반으로 이 배열에서 값을 가져오고,
+ *      서로 다른 축의 값을 XOR 연산하여 난수 테이블 접근 인덱스를 해싱함
+ *
+ * 3. noise(p)
+ *    - 입력된 3D 좌표 p를 정수 격자 인덱스로 스케일링
+ *    - perm 테이블에서 해당 좌표 축마다 섞인 인덱스를 추출
+ *    - XOR 해싱으로 최종 인덱스를 계산하여 randfloat[]에서 대응되는 값 반환
+ *
+ * 이 구현은 단일 float 값을 반환하는 "pseudo-random noise function"까지만 완성된 상태임.
+ * 아직 Perlin Noise의 핵심적인 연속성 구현 요소들(gradient, fade, 보간 등)은 포함되지 않음.
+ *
+ * 다음 단계에서는:
+ *  - 각 격자점에 gradient 벡터를 부여하고
+ *  - 입력 좌표에서의 상대 위치 벡터와 내적(dot product) 수행
+ *  - 그 결과들을 fade 보간 함수와 trilinear interpolation을 통해
+ *    공간적으로 부드럽고 연속적인 Perlin noise 값을 생성하게 됨.
+ */
+
+/**
+ * Fisher–Yates Shuffle 알고리즘
+ *
+ * - permute()에서 사용하는 배열 섞기 방식
+ * - O(n) 시간에 순열을 무작위로 만드는 고전적인 알고리즘
+ */
+
+/**
+ * & 255 연산자 (bitwise AND 연산)
+ *
+ * - 입력 좌표를 정수 인덱스로 변환한 후 난수 테이블 크기(256)에 맞춰 [0, 255] 범위로 wrap-around 처리
+ * - int(4 * p.x()) & 255 는 int(4 * p.x()) % 256 (나머지 연산) 과 같은 의미이지만 bitwise 연산이 더 빠름
+ * - 하위 8비트만 유지하는 비트 마스킹을 통해 안전하게 배열 접근 가능
+ */
+
+/**
+ * perline::noise() 에서 입력 좌표에 4를 scaling 하는 이유
+ *
+ *
+ * Perlin noise는 좌표를 격자로 나누어 동작하기 때문에,
+ * p.x()와 같이 실수 좌표를 정수로 캐스팅하면 동일한 격자에 묶여버려 noise 값이 변하지 않음.
+ *
+ * 예를 들어, 입력 좌표 p.x() 가 각각 0.1, 0.3, 0.6, 0.9, 1.0 이라면,
+ * int(p.x()) 로 바로 캐스팅하면 각각 0, 0, 0, 0, 1 이 되어버림.
+ *
+ * 반면, int(4 * p.x()) 스케일링 후 캐스팅하면 각각 0, 1, 2, 3, 4 가 되어 버림.
+ *
+ * 즉, 입력 좌표 상으로 동일한 [0.1, 1.0] 구간이지만,
+ * 얼만큼 scaling 하느냐에 따라 동일한 구간 내에서 더 다양한 범위의 정수값을 기반으로
+ * 난수 테이블 인덱스를 해싱할 수 있음.
+ *
+ * 즉, 동일한 구간 내에서 난수 테이블로부터 더 다양한 난수값을 참조해올 수 있다는 뜻임.
+ *
+ * 이렇게 하면 결과적으로 동일한 구간 내에서
+ * 더 다양한 랜덤성을 보이면서 조밀하고 세밀한 noise 패턴이 나오게 되는 것!
+ *
+ * 그래서 4는 임의의 scaling factor 일 뿐,
+ * 더 큰 값을 사용하면 noise 가 조밀해지고 detail 이 많아질 것임.
+ */
 
 #endif /* PERLIN_HPP */
