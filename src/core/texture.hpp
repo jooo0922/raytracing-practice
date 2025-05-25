@@ -130,7 +130,6 @@ public:
   noise_texture() {};
 
   // 입력된 point3 좌표값을 해싱하여 생성된 pseudo random 값(perlin::noise())를 밝기값 삼아 grayscale 색상으로 반환
-  // 참고로, perlin noise 에서 생성된 난수는 입력된 좌표값이 동일하면 항상 일관된 난수를 생성하는 "재현 가능한 난수" 라는 특징이 있음.
   color value(double u, double v, const point3 &p) const override
   {
     return color(1.0f, 1.0f, 1.0f) * noise.noise(p);

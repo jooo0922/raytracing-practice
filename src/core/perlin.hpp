@@ -93,6 +93,7 @@ private:
  *    - 입력된 3D 좌표 p를 정수 격자 인덱스로 스케일링
  *    - perm 테이블에서 해당 좌표 축마다 섞인 인덱스를 추출
  *    - XOR 해싱으로 최종 인덱스를 계산하여 randfloat[]에서 대응되는 값 반환
+ *    - perlin noise 에서 생성된 난수는 입력된 좌표값이 동일하면 항상 일관된 난수를 생성하는 "재현 가능한 난수"
  *
  * 이 구현은 단일 float 값을 반환하는 "pseudo-random noise function"까지만 완성된 상태임.
  * 아직 Perlin Noise의 핵심적인 연속성 구현 요소들(gradient, fade, 보간 등)은 포함되지 않음.
