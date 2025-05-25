@@ -3,6 +3,7 @@
 
 #include "common/rtweekend.hpp"
 #include "rtw_stb_image.hpp"
+#include "perlin.hpp"
 
 /**
  * texture 추상 클래스
@@ -118,6 +119,24 @@ public:
 
 private:
   rtw_image image; // stb_image 라이브러리를 래핑하여 이미지 데이터 로드, 변환, 읽기 등을 처리하는 헬퍼 클래스 멤버
+};
+
+/**
+ * perlin noise 알고리즘 기반 노이즈 텍스쳐(절차적 텍스쳐) 클래스 정의
+ */
+class noise_texture : public texture
+{
+public:
+  noise_texture() {};
+
+  // 입력된 point3 좌표값을 해싱하여 생성된 난수(perlin::noise())를 밝기값 삼아 grayscale 색상으로 반환
+  color value(double u, double v, const point3 &p) const override
+  {
+    return color(1.0f, 1.0f, 1.0f) * noise.noise(p);
+  };
+
+private:
+  perlin noise; // perlin noise 알고리즘으로 절차적 노이즈를 생성하는 클래스
 };
 
 /**
