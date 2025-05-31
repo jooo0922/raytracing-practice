@@ -38,7 +38,7 @@ public:
   //   return randfloat[perm_x[i] ^ perm_y[j] ^ perm_z[k]];
   // };
 
-  // 입력 좌표 p 가 포함된 단위 큐브(모서리 길이가 1인 큐브)의 8개 꼭짓점 노이즈 값을 거리 가중치로 보간하여 부드러운 노이즈 값을 반환하는 함수
+  // 입력 좌표 p 가 포함된 단위 큐브(모서리 길이가 1인 큐브)의 8개 꼭짓점 노이즈 값을 거리 가중치로 보간하여 부드러운 노이즈 값을 반환하는 함수 (하단 필기 참고)
   double noise(const point3 &p) const
   {
     // 입력 좌표 p 가 단위 큐브 내에서 갖는 상대 좌표 (소수부) 추출 -> 좌표값 범위는 단위 큐브 내 좌표이므로 [0.0, 1.0] 사이
@@ -108,8 +108,30 @@ private:
   };
 
   // 단위 큐브 내 8개 꼭짓점에 할당된 random noise 값을
-  // 단위 큐브 내 임의의 점 (u, v, w) 과의 거리를 기반으로 3차원 보간(trilinear interpolation)한다.
-  static double trilinear_interp(double c[2][2][2], double u, double v, double w) {
+  // 단위 큐브 내 임의의 점 (u, v, w) 과의 거리를 기반으로 3차원 보간(trilinear interpolation)하는 함수
+  static double trilinear_interp(double c[2][2][2], double u, double v, double w)
+  {
+    // 단위 큐브 내 임의의 점과의 거리 가중치에 따라 3차원 보간될 최종 부드러운 노이즈값 -> 당연히 [0.0, 1.0] 범위 내에서 계산됨.
+    auto accum = 0.0f;
+
+    // 3중 for 루프를 통해 8개 꼭짓점의 noise 값을 순회하며 단위 큐브 내 임의의 점과의 거리 가중치를 적용하여 3차원 보간
+    for (int i = 0; i < 2; i++)
+    {
+      for (int j = 0; j < 2; j++)
+      {
+        for (int k = 0; k < 2; k++)
+        {
+          // 각각의 꼭짓점에 대해, 단위 큐브 내 임의의 점 (u, v, w) 와의 "거리 기반" 3차원 보간 가중치를 적용하여 누산
+          // -> 임의의 점 (u, v, w) 와 가까운 꼭지점일수록 높은 가중치가 적용되고, 먼 꼭지점일수록 낮은 가중치가 적용됨.
+          accum += (i * u + (1 - i) * (1 - u))   // 단위 큐브 x 축 방향 보간 가중치: i == 0 인 꼭지점 → (1 - u), i == 1 인 꼭지점 → u
+                   * (j * v + (1 - j) * (1 - v)) // 단위 큐브 y 축 방향 보간 가중치: j == 0 인 꼭지점 → (1 - v), j == 1 인 꼭지점 → v
+                   * (k * w + (1 - k) * (1 - w)) // 단위 큐브 x 축 방향 보간 가중치: k == 0 인 꼭지점 → (1 - w), k == 1 인 꼭지점 → w
+                   * c[i][j][k];                 // 현재 순회 중인 꼭짓점의 noise 값
+        };
+      };
+    };
+
+    return accum;
   };
 
 private:
@@ -187,6 +209,53 @@ private:
  *
  * 그래서 4는 임의의 scaling factor 일 뿐,
  * 더 큰 값을 사용하면 noise 가 조밀해지고 detail 이 많아질 것임.
+ */
+
+/**
+ * 부드러운 perlin noise (smoothing out noise)
+ *
+ *
+ * 두 번째 버전의 noise() 함수는 입력 좌표 p가 포함된 단위 큐브를 기준으로,
+ * 그 8개 꼭짓점에 저장된 난수 값을 거리 기반의 가중치로 보간하여 noise 값을 생성한다.
+ *
+ * trilinear_interp() 함수는 단위 큐브 내 세 방향(x, y, z)에 대해 선형 보간을 중첩한 3차원 보간 함수로,
+ * 가까운 꼭짓점일수록 더 큰 가중치를 부여하여 전체 noise 값의 부드러운 공간적 변화를 유도한다.
+ *
+ * 보간에 사용되는 (u, v, w)는 p의 소수부로, 입력 좌표 p 의 단위 큐브 내에서의 상대 위치를 의미한다.
+ *
+ * 이 방식은 주변 꼭짓점들과의 연속적 가중합을 통해
+ * 주변에 인접한 p들 간의 유사한 noise 값이 나오도록 하여 smoothing out 되는 효과를 볼 수 있다.
+ */
+
+/**
+ * Smoothing noise with trilinear interpoation(3차원 보간)
+ *
+ *
+ * trilinear_interp 함수는 단위 큐브 내 8개 꼭짓점에 저장된 noise 값을,
+ * 입력 좌표 p 의 상대 위치 (u, v, w) 와의 거리 기반으로 3차원 보간하여 하나의 noise 값으로 결합한다.
+ *
+ * 이 보간 과정은 기본적으로 1차원 선형 보간 식:
+ *     lerp(a, b, t) = (1 - t) * a + t * b
+ * 의 3차원 공간 확장판으로 이해할 수 있다.
+ *
+ * - 여기서 가중치 t는 입력 좌표의 단위 큐브 내 상대 위치 u, v, w로 대응된다. (거리 기반 가중치)
+ * - 보간 기준점 a와 b는 단위 큐브 내 8개의 각 꼭짓점 noise 값에 해당한다.
+ *
+ * 이를 3차원으로 확장하면:
+ *     value = Σ_{i,j,k in {0,1}} weight(i,j,k) * c[i][j][k]
+ *     weight(i,j,k) = (i*u + (1-i)*(1-u)) * (j*v + (1-j)*(1-v)) * (k*w + (1-k)*(1-w))
+ *
+ * 이처럼 각 축의 방향으로 i,j,k 값을 0 또는 1로 설정하여,
+ * 각 꼭짓점에서 단위 큐브 내 입력 좌표(u, v, w)와의 거리 기반 보간 가중치를 계산 및 noise 값에 적용하여
+ * 최종적으로 모두 누산(accumulate)한다.
+ *
+ * 보간 다항식이 3차원으로 확장되면 식이 길고 복잡해지기 때문에,
+ * 이를 코드로 간결하게 구현하기 위해 3중 for loop + 누산기(accum)를 사용한다.
+ *
+ * 이 방식은 trilinear 보간의 수학적 원리를 그대로 코드로 풀어낸 형태이며,
+ * 주변 꼭짓점과의 거리 기반으로 noise 값을 혼합하여 부드러운 결과를 만든다.
+ *
+ * 참고: https://en.wikipedia.org/wiki/Trilinear_interpolation#Mathematical_description
  */
 
 #endif /* PERLIN_HPP */
