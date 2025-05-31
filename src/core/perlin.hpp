@@ -48,7 +48,7 @@ public:
 
     // Hermite cubic smoothing (하단 필기 참고)
     // 단위 큐브 내 상대 좌표(이자 trilinear interpolation 의 가중치 역할)인 (u, v, w)를 3u² - 2u³ 형태의 hermite cubic 다항식으로 변환
-    // → 상대 좌표 (u, v, w) 가 smoothstep 형태의 부드러운 분포를 띄도록 조정
+    // → 상대 좌표 (u, v, w) 가 linear 형태 분포 -> smoothstep 형태 부드러운 곡선 분포를 띄도록 변환
     u = u * u * (3 - 2 * u);
     v = v * v * (3 - 2 * v);
     w = w * w * (3 - 2 * w);
