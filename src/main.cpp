@@ -170,7 +170,7 @@ void perlin_sphere(std::ofstream &output_file)
   hittable_list world;
 
   // perlin noise 적용을 위해 noise_texture 생성 후 lambertian material 에 적용
-  auto pertext = std::make_shared<noise_texture>();
+  auto pertext = std::make_shared<noise_texture>(4);
   // 반지름이 각각 2, 1000 인 두 checkered sphere 추가
   world.add(std::make_shared<sphere>(point3(0.0f, -1000.0f, 0.0f), 1000.0f, std::make_shared<lambertian>(pertext)));
   world.add(std::make_shared<sphere>(point3(0.0f, 2.0f, 0.0f), 2.0f, std::make_shared<lambertian>(pertext)));
