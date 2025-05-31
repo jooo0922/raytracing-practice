@@ -127,16 +127,19 @@ private:
 class noise_texture : public texture
 {
 public:
-  noise_texture() {};
+  noise_texture(double scale) : scale(scale) {};
 
   // 입력된 point3 좌표값을 해싱하여 생성된 pseudo random 값(perlin::noise())를 밝기값 삼아 grayscale 색상으로 반환
   color value(double u, double v, const point3 &p) const override
   {
-    return color(1.0f, 1.0f, 1.0f) * noise.noise(p);
+    // scale 값을 입력 좌표에 곱하여 perlin noise의 노이즈 주기를 높임(더 자글자글한 노이즈로 보이도록...)
+    // -> perlin::noise() 함수에서 입력 좌표를 4로 스케일링하여 격자 해상도를 높인 것과 동일한 원리!
+    return color(1.0f, 1.0f, 1.0f) * noise.noise(scale * p);
   };
 
 private:
   perlin noise; // perlin noise 알고리즘으로 절차적 노이즈를 생성하는 클래스
+  double scale; // perlin noise 의 공간적 주기(frequency)를 조절하는 스케일 값
 };
 
 /**
