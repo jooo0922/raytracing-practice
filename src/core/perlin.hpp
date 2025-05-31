@@ -25,17 +25,56 @@ public:
   };
 
   // 3차원 입력 좌표를 받아 해싱된 난수 테이블 인덱스를 통해 랜덤 float 값을 읽어 반환하는 함수
+  // double noise(const point3 &p) const
+  // {
+  //   // 3. 입력 좌표를 스케일하여 격자 해상도를 높이고 (하단 필기 참고)
+  //   //    정수 인덱스로 변환한 뒤 & 255 (bitwise AND 연산)를 통해 0~255 범위로 wrap-around (하단 필기 참고)
+  //   auto i = int(4 * p.x()) & 255;
+  //   auto j = int(4 * p.y()) & 255;
+  //   auto k = int(4 * p.z()) & 255;
+
+  //   // 4. 뒤섞인 각 순열 테이블에서 뽑은 값들을 bitwise XOR 해싱 → 0~255 범위 난수 테이블 인덱스 도출
+  //   //    → randfloat[]에서 해당 위치의 난수 반환
+  //   return randfloat[perm_x[i] ^ perm_y[j] ^ perm_z[k]];
+  // };
+
+  // 입력 좌표 p 가 포함된 단위 큐브(모서리 길이가 1인 큐브)의 8개 꼭짓점 노이즈 값을 거리 가중치로 보간하여 부드러운 노이즈 값을 반환하는 함수
   double noise(const point3 &p) const
   {
-    // 3. 입력 좌표를 스케일하여 격자 해상도를 높이고 (하단 필기 참고)
-    //    정수 인덱스로 변환한 뒤 & 255 (bitwise AND 연산)를 통해 0~255 범위로 wrap-around (하단 필기 참고)
-    auto i = int(4 * p.x()) & 255;
-    auto j = int(4 * p.y()) & 255;
-    auto k = int(4 * p.z()) & 255;
+    // 입력 좌표 p 가 단위 큐브 내에서 갖는 상대 좌표 (소수부) 추출 -> 좌표값 범위는 단위 큐브 내 좌표이므로 [0.0, 1.0] 사이
+    auto u = p.x() - std::floor(p.x());
+    auto v = p.y() - std::floor(p.y());
+    auto w = p.z() - std::floor(p.z());
 
-    // 4. 뒤섞인 각 순열 테이블에서 뽑은 값들을 bitwise XOR 해싱 → 0~255 범위 난수 테이블 인덱스 도출
-    //    → randfloat[]에서 해당 위치의 난수 반환
-    return randfloat[perm_x[i] ^ perm_y[j] ^ perm_z[k]];
+    // 입력 좌표 p가 포함된 단위 큐브의 최소 꼭짓점 좌표 (정수부) 추출
+    auto i = int(std::floor(p.x()));
+    auto j = int(std::floor(p.y()));
+    auto k = int(std::floor(p.z()));
+
+    // 단위 큐브의 8개의 꼭짓점에 대한 난수 값(노이즈 값) 저장할 3차원 배열 테이블 선언
+    double c[2][2][2];
+
+    // 8개 꼭짓점 위치값을 기반으로 해싱된 난수 테이블 인덱스로부터 noise 값 조회
+    for (int di = 0; di < 2; di++)
+    {
+      for (int dj = 0; dj < 2; dj++)
+      {
+        for (int dk = 0; dk < 2; dk++)
+        {
+          // 단위 큐브 x, y, z 축 방향의 거리인 di, dj, dk 를 최소 꼭짓점 좌표에 더해서 각 꼭지점 위치 계산
+          // -> 거리값 di, dj, dk 는 각 꼭지점 순서로 볼 수 있으므로, 각 꼭지점 노이즈 값이 저장되는 테이블 인덱스로 활용
+          c[di][dj][dk] = randfloat[
+              // 각 꼭지점 위치값((i + di), (j + dj), (k + dk)) 을 & 255 (bitwise AND 연산)를 통해 0~255 범위로 wrap-around
+              // wrap-around 된 정수값으로 순열 테이블에서 뽑은 값들을 bitwise XOR 해싱 → 0~255 범위 난수 테이블 인덱스 도출
+              perm_x[(i + di) & 255] ^
+              perm_y[(j + dj) & 255] ^
+              perm_z[(k + dk) & 255]];
+        };
+      };
+    };
+
+    // 단위 큐브 내 상대 위치 (u, v, w) 와의 거리를 기반으로 8개의 꼭짓점 값을 3차원 보간하여 최종적인 부드러운 noise 값 계산
+    return trilinear_interp(c, u, v, w);
   };
 
 private:
@@ -66,6 +105,11 @@ private:
       p[i] = p[target];
       p[target] = tmp;
     }
+  };
+
+  // 단위 큐브 내 8개 꼭짓점에 할당된 random noise 값을
+  // 단위 큐브 내 임의의 점 (u, v, w) 과의 거리를 기반으로 3차원 보간(trilinear interpolation)한다.
+  static double trilinear_interp(double c[2][2][2], double u, double v, double w) {
   };
 
 private:
