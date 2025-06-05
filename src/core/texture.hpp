@@ -129,18 +129,22 @@ class noise_texture : public texture
 public:
   noise_texture(double scale) : scale(scale) {};
 
-  // 입력된 point3 좌표값을 해싱하여 생성된 pseudo random 값(perlin::noise())를 밝기값 삼아 grayscale 색상으로 반환
+  // 입력된 point3 좌표값을 기반으로 계산된 perlin noise 값을 grayscale 색상으로 반환
   color value(double u, double v, const point3 &p) const override
   {
     /** trilinear interpolation 기반 perlin noise 사용 */
     // scale 값을 입력 좌표에 곱하여 perlin noise의 노이즈 주기를 높임(더 자글자글한 노이즈로 보이도록...)
-    // -> perlin::noise() 함수에서 입력 좌표를 4로 스케일링하여 격자 해상도를 높인 것과 동일한 원리!
+    // -> perlin::noise_hash() 함수에서 입력 좌표를 4로 스케일링하여 격자 해상도를 높인 것과 동일한 원리!
     // return color(1.0f, 1.0f, 1.0f) * noise.noise_trilinear(scale * p);
 
     /** random gradient vector 내적값 기반 perlin noise 사용 */
     // -> 내적값의 범위가 [-1.0, 1.0] 이므로, noise 값 범위도 동일. 따라서, 해당 범위를 [0.0, 1.0] 으로 맵핑시켜 최종 색상값 계산.
     // -> 음수인 색상값이 나오면 안되니까!
-    return color(1.0f, 1.0f, 1.0f) * 0.5f * (1.0f + noise.noise_perlin(scale * p));
+    // return color(1.0f, 1.0f, 1.0f) * 0.5f * (1.0f + noise.noise_perlin(scale * p));
+
+    /** 여러 주파수 단계별 noise 를 중첩시켜서 복잡한 패턴을 만드는 turbulence noise 사용 */
+    // 7단계 주파수 noise 를 중첩시킨 noise 값을 grayscale 색상으로 변환
+    return color(1.0f, 1.0f, 1.0f) * noise.turb(p, 7);
   };
 
 private:
