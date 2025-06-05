@@ -12,9 +12,15 @@ public:
   perlin()
   {
     // 1. [0.0, 1.0] 범위 랜덤 float 값으로 난수 테이블 초기화
+    // for (int i = 0; i < point_count; i++)
+    // {
+    //   randfloat[i] = random_double();
+    // }
+
+    // 1. 단위 큐브의 각 8개 꼭지점(lattice point)에 할당할 랜덤 방향벡터 테이블 초기화
     for (int i = 0; i < point_count; i++)
     {
-      randfloat[i] = random_double();
+      randvec[i] = unit_vector(vec3::random(-1.0f, 1.0f));
     }
 
     // 2. 입력 좌표의 x, y, z 축별로 사용할 무작위로 섞인 순열 테이블 생성
@@ -25,21 +31,21 @@ public:
   };
 
   // 3차원 입력 좌표를 받아 해싱된 난수 테이블 인덱스를 통해 랜덤 float 값을 읽어 반환하는 함수
-  // double noise(const point3 &p) const
-  // {
-  //   // 3. 입력 좌표를 스케일하여 격자 해상도를 높이고 (하단 필기 참고)
-  //   //    정수 인덱스로 변환한 뒤 & 255 (bitwise AND 연산)를 통해 0~255 범위로 wrap-around (하단 필기 참고)
-  //   auto i = int(4 * p.x()) & 255;
-  //   auto j = int(4 * p.y()) & 255;
-  //   auto k = int(4 * p.z()) & 255;
+  double noise_hash(const point3 &p) const
+  {
+    // 3. 입력 좌표를 스케일하여 격자 해상도를 높이고 (하단 필기 참고)
+    //    정수 인덱스로 변환한 뒤 & 255 (bitwise AND 연산)를 통해 0~255 범위로 wrap-around (하단 필기 참고)
+    auto i = int(4 * p.x()) & 255;
+    auto j = int(4 * p.y()) & 255;
+    auto k = int(4 * p.z()) & 255;
 
-  //   // 4. 뒤섞인 각 순열 테이블에서 뽑은 값들을 bitwise XOR 해싱 → 0~255 범위 난수 테이블 인덱스 도출
-  //   //    → randfloat[]에서 해당 위치의 난수 반환
-  //   return randfloat[perm_x[i] ^ perm_y[j] ^ perm_z[k]];
-  // };
+    // 4. 뒤섞인 각 순열 테이블에서 뽑은 값들을 bitwise XOR 해싱 → 0~255 범위 난수 테이블 인덱스 도출
+    //    → randfloat[]에서 해당 위치의 난수 반환
+    return randfloat[perm_x[i] ^ perm_y[j] ^ perm_z[k]];
+  };
 
   // 입력 좌표 p 가 포함된 단위 큐브(모서리 길이가 1인 큐브)의 8개 꼭짓점 노이즈 값을 거리 가중치로 보간하여 부드러운 노이즈 값을 반환하는 함수 (하단 필기 참고)
-  double noise(const point3 &p) const
+  double noise_trilinear(const point3 &p) const
   {
     // 입력 좌표 p 가 단위 큐브 내에서 갖는 상대 좌표 (소수부) 추출 -> 좌표값 범위는 단위 큐브 내 좌표이므로 [0.0, 1.0] 사이
     auto u = p.x() - std::floor(p.x());
@@ -82,6 +88,47 @@ public:
 
     // 단위 큐브 내 상대 위치 (u, v, w) 와의 거리를 기반으로 8개의 꼭짓점 값을 3차원 보간하여 최종적인 부드러운 noise 값 계산
     return trilinear_interp(c, u, v, w);
+  };
+
+  // 입력 좌표 p 가 포함된 단위 큐브(모서리 길이가 1인 큐브)의 8개 꼭짓점에 랜덤 방향벡터(= gradient vector) 할당 후, 벡터 간 내적값을 거리 가중치로 보간하여 부드러운 노이즈 값을 반환하는 함수 (하단 필기 참고)
+  // -> perlin::noise_trilinear 로 생성한 noise 의 blocky 한 자국을 줄이기 위해 개선된 방법 (하단 필기 참고)
+  double noise_perlin(const point3 &p) const
+  {
+    // 입력 좌표 p 가 단위 큐브 내에서 갖는 상대 좌표 (소수부) 추출 -> 좌표값 범위는 단위 큐브 내 좌표이므로 [0.0, 1.0] 사이
+    auto u = p.x() - std::floor(p.x());
+    auto v = p.y() - std::floor(p.y());
+    auto w = p.z() - std::floor(p.z());
+
+    // 입력 좌표 p가 포함된 단위 큐브의 최소 꼭짓점 좌표 (정수부) 추출
+    auto i = int(std::floor(p.x()));
+    auto j = int(std::floor(p.y()));
+    auto k = int(std::floor(p.z()));
+
+    // 단위 큐브의 8개의 꼭짓점에 random 방향벡터(= gradient vector)를 저장할 3차원 배열 테이블 선언
+    vec3 c[2][2][2];
+
+    // 8개 꼭짓점 위치값을 기반으로 해싱된 랜덤 방향벡터 테이블 인덱스로부터 랜덤 방향벡터 조회
+    for (int di = 0; di < 2; di++)
+    {
+      for (int dj = 0; dj < 2; dj++)
+      {
+        for (int dk = 0; dk < 2; dk++)
+        {
+          // 단위 큐브 x, y, z 축 방향의 거리인 di, dj, dk 를 최소 꼭짓점 좌표에 더해서 각 꼭지점 위치 계산
+          // -> 거리값 di, dj, dk 는 각 꼭지점 순서로 볼 수 있으므로, 각 꼭지점 랜덤 방향벡터가 저장되는 테이블 인덱스로 활용
+          c[di][dj][dk] = randvec[
+              // 각 꼭지점 위치값((i + di), (j + dj), (k + dk)) 을 & 255 (bitwise AND 연산)를 통해 0~255 범위로 wrap-around
+              // wrap-around 된 정수값으로 순열 테이블에서 뽑은 값들을 bitwise XOR 해싱 → 0~255 범위 랜덤 방향벡터 테이블 인덱스 도출
+              perm_x[(i + di) & 255] ^
+              perm_y[(j + dj) & 255] ^
+              perm_z[(k + dk) & 255]];
+        };
+      };
+    };
+
+    // 단위 큐브 상의 8개의 꼭짓점에 할당된 gradient vector 와 offset vector 간 내적값을
+    // 단위 큐브 내 상대 위치 (u, v, w) 와의 거리 가중치를 기반으로 3차원 보간하여 blocky 한 자국을 최소화한 노이즈 값 계산
+    return perlin_interp(c, u, v, w);
   };
 
 private:
@@ -141,9 +188,50 @@ private:
     return accum;
   };
 
+  // 단위 큐브 내 8개 꼭짓점에 할당된 random 방향벡터(= gradient vector)와 각 꼭지점 ~ 단위 큐브 내 입력 좌표 (u, v, w) 방향벡터(= offset vector) 내적값을
+  // 단위 큐브 내 임의의 점 (u, v, w) 과의 거리를 기반으로 3차원 보간(trilinear interpolation)하는 함수
+  static double perlin_interp(const vec3 c[2][2][2], double u, double v, double w)
+  {
+    // Hermite cubic smoothing (하단 필기 참고)
+    // 단위 큐브 내 상대 좌표(이자 trilinear interpolation 의 가중치 역할)인 (u, v, w)를 3u² - 2u³ 형태의 hermite cubic 다항식으로 변환
+    // → 상대 좌표 (u, v, w) 가 linear 형태 분포 -> smoothstep 형태 부드러운 곡선 분포를 띄도록 변환
+    // → offset vector 인 vec3 weight_v 를 구하려면 단위 큐브 내 입력 상대 좌표의 원본값(u, v, w)를 알아야 하므로,
+    // 원본값을 매개변수로 먼저 받은 뒤에 hermite cubic 다항식으로 입력 좌표 분포를 따로 변환하도록 해당 코드를 보간 함수 내부로 옮김.
+    auto uu = u * u * (3 - 2 * u);
+    auto vv = v * v * (3 - 2 * v);
+    auto ww = w * w * (3 - 2 * w);
+
+    // 단위 큐브 내 임의의 점과의 거리 가중치에 따라 3차원 보간될 최종 부드러운 노이즈값 -> 내적값이 누산되므로, [-1.0, 1.0] 범위 내에서 계산됨.
+    auto accum = 0.0f;
+
+    // 3중 for 루프를 통해 8개 꼭짓점의 random gradient vector 를 순회하며 단위 큐브 내 임의의 점을 향하는 offset vector 와 내적 후,
+    // 내적값을 단위 큐브 내 임의의 점과의 거리 가중치를 적용하여 3차원 보간
+    // -> 보간에 사용되는 거리 가중치 계산은 perlin::trilinear_interp 함수에서 구현했던 것과 동일
+    for (int i = 0; i < 2; i++)
+    {
+      for (int j = 0; j < 2; j++)
+      {
+        for (int k = 0; k < 2; k++)
+        {
+          // 현재 순회 중인 꼭지점 -> 단위 큐브 내 임의의 점 (u, v, w) 방향의 offset vector 계산
+          vec3 weight_v(u - i, v - j, w - k);
+          // 각각의 꼭짓점에 대해, 단위 큐브 내 임의의 점 (u, v, w) 와의 "거리 기반" 3차원 보간 가중치를 적용하여 누산
+          // -> 임의의 점 (u, v, w) 와 가까운 꼭지점일수록 높은 가중치가 적용되고, 먼 꼭지점일수록 낮은 가중치가 적용됨.
+          accum += (i * uu + (1 - i) * (1 - uu))   // 단위 큐브 x 축 방향 보간 가중치: i == 0 인 꼭지점 → (1 - uu), i == 1 인 꼭지점 → uu
+                   * (j * vv + (1 - j) * (1 - vv)) // 단위 큐브 y 축 방향 보간 가중치: j == 0 인 꼭지점 → (1 - vv), j == 1 인 꼭지점 → vv
+                   * (k * ww + (1 - k) * (1 - ww)) // 단위 큐브 x 축 방향 보간 가중치: k == 0 인 꼭지점 → (1 - ww), k == 1 인 꼭지점 → ww
+                   * dot(c[i][j][k], weight_v);    // 현재 순회 중인 꼭짓점의 gradient vector 와 offset vector 내적값
+        };
+      };
+    };
+
+    return accum;
+  };
+
 private:
   static const int point_count = 256; // 난수 테이블 크기
   double randfloat[point_count];      // 난수 테이블 (재현 가능한 pseudo-random float 값들)
+  vec3 randvec[point_count];          // random vector 테이블 (재현 가능한 pseudo-random 방향벡터들)
 
   // 난수 테이블 참조 인덱스를 해싱할 때 사용할 순열들을 무작위로 뒤섞어놓은 순열 테이블 (좌표 해싱용)
   int perm_x[point_count];
@@ -312,6 +400,29 @@ private:
  * 실제보다 더 뚜렷한 경계나 명암 대비를 느끼는 착시 현상이 발생한다.
  * 이 현상을 **Mach band**라고 하며, 선형 보간만 사용하는 경우 더 뚜렷하게 드러난다.
  *     → 밝기 변화가 급격해 보이는 경계선처럼 인식됨
+ */
+
+/**
+ * gradient vector 기반 perlin noise 계산 알고리즘
+ *
+ *
+ * 기존 trilinear interpolation 기반의 노이즈(perlin::noise_trilinear)는
+ * 단위 큐브의 8개 lattice point마다 고정된 float 값을 할당하고,
+ * 입력 좌표와 각 꼭짓점 간 거리(가중치)를 기반으로 단순 선형 보간하여 값을 계산한다.
+ *
+ * 이 방식은 보간의 기준점 값(lerp 함수로 치면 a, b에 해당)이 입력 좌표에 관계없이 고정되어 있어,
+ * 단위 큐브 경계에서 색상이나 값이 급격히 변하는 blocky한 패턴이 시각적으로 드러나는 단점이 있다.
+ *
+ * 이를 해결하기 위해 **perlin::noise_perlin** 은
+ * 단위 큐브 상 8개의 lattice point마다 임의의 방향을 갖는 **랜덤 단위 벡터(= gradient vector)**를 할당하고,
+ * 보간 시에는 각 꼭짓점으로부터 입력 좌표까지의 벡터(= offset vector)와 해당 랜덤 벡터 간의 **내적**을 사용한다.
+ * 내적은 벡터 간 각도에 따라 결과가 달라지므로, **같은 꼭짓점이라도 입력 좌표 위치가 다르면 다른 보간 기준값**이 나오게 된다.
+ *
+ * 이렇게 하면 기존과는 달리 보간 기준값 자체(lerp 함수의 a, b)가 입력 위치마다 변동되므로,
+ * 결과적으로 더 부드럽고 자연스러운 노이즈가 생성되며, 경계면에서의 blocky artifact가 사라진다.
+ *
+ * 이 원리는 간단한 선형 보간(lerp)에서의 기준값 a, b를 공간 좌표에 따라 동적으로 변하게 만든 것이며,
+ * Perlin 노이즈의 핵심적인 시각적 개선점 중 하나다.
  */
 
 #endif /* PERLIN_HPP */
