@@ -144,7 +144,10 @@ public:
 
     /** 여러 주파수 단계별 noise 를 중첩시켜서 복잡한 패턴을 만드는 turbulence noise 사용 */
     // 7단계 주파수 noise 를 중첩시킨 noise 값을 grayscale 색상으로 변환
-    return color(1.0f, 1.0f, 1.0f) * noise.turb(p, 7);
+    // return color(1.0f, 1.0f, 1.0f) * noise.turb(p, 7);
+
+    /** z축 방향 sin 파형에 turbulence noise 를 더해 위상(phase)을 불규칙하게 흔든 marble 무늬 생성 (하단 필기 참고) */
+    return color(0.5f, 0.5f, 0.5f) * (1.0f + std::sin(scale * p.z() + 10.0f * noise.turb(p, 7)));
   };
 
 private:
@@ -189,6 +192,21 @@ private:
  *   solid_color, noise_texture, mix_texture 등 어떤 텍스처도 재귀적으로 삽입 가능
  * - 이로 인해 텍스처 시스템이 노드 기반 그래프처럼 확장 가능하며,
  *   유연한 조합 및 표현이 가능해짐
+ */
+
+/**
+ * turbulence noise 를 응용하여 marble pattern 생성하기
+ *
+ *
+ * z축 방향의 거리값에 따라 sin(scale * p.z()) 파형을 색상값으로 변환하면,
+ * z축 방향으로 규칙적인 물결 패턴(= sin 파)이 렌더링된다.
+ *
+ * 여기에 noise.turb(p, 7)를 위상(phase shift) 값으로 더함으로써,
+ * 규칙적인 sin 곡선을 turbulence noise 기반으로 불규칙하게 흔든 형태의 패턴이 생성된다.
+ *
+ * sin 함수의 입력값(= 입력 좌표의 z값이 기본.)이 turbulence noise 에 의해 불규칙적으로 변형됨에 따라
+ * 결과적으로 스트라이프가 물결치듯 변형된 marble(대리석) 질감이 형성된다.
+ * 이처럼 turbulence는 단순한 패턴에 변형을 주는 방식으로 자주 활용된다.
  */
 
 #endif /* TEXTURE_HPP */
