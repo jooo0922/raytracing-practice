@@ -131,6 +131,32 @@ public:
     return perlin_interp(c, u, v, w);
   };
 
+  // 여러 주파수의 노이즈를 누산하여 복잡한 텍스처 패턴을 생성하는 turbulence 함수 (turbulence noise 관련 하단 필기 참고)
+  double turb(const point3 &p, int depth) const
+  {
+    auto accum = 0.0f;  // depth 단계별 noise 값 누산 결과를 저장할 변수 초기화
+    auto temp_p = p;    // depth 단계에 따라 점차 조밀해지는 입력 좌표를 담을 임시 변수
+    auto weight = 1.0f; // depth 단계에 따라 점차 작아지는 (noise 값에 적용할) 가중치 변수 초기화
+
+    // 주어진 depth 단계만큼 입력 좌표의 주파수를 점차 높이고 가중치를 낮추며 노이즈를 누산
+    for (int i = 0; i < depth; i++)
+    {
+      // gradient vector 기반 noise 계산 후 현재 단계의 가중치 적용하여 누산
+      accum += weight * noise_perlin(temp_p);
+
+      // 입력 좌표가 조밀해질수록 high frequency 노이즈의 가중치를 절반씩 감소시킴 -> 최종 노이즈 값에 대한 영향력 감소
+      weight *= 0.5f;
+
+      // depth 단계에 따라 입력 좌표가 점차 조밀해지도록 좌표 스케일 2배 적용
+      // -> perlin::noise_hash() 함수에서 입력 좌표를 4로 스케일링하여 격자 해상도를 높인 것과 동일한 원리!
+      temp_p *= 2.0f;
+    }
+
+    // gradient vector 기반 noise 는 내적값 기반으로 계산되므로 음수값이 나올 수 있음.
+    // -> 음수 noise 값도 절댓값만 추출하여 양수로 변환함으로써, 서로 반대 위치의 두 노이즈값이 동일하게 계산되어 대칭 패턴을 이루도록 함.
+    return std::fabs(accum);
+  };
+
 private:
   // x, y, z 축별로 사용할 순열 테이블을 받아서 무작위로 섞는 함수
   static void perlin_generate_perm(int *p)
@@ -423,6 +449,24 @@ private:
  *
  * 이 원리는 간단한 선형 보간(lerp)에서의 기준값 a, b를 공간 좌표에 따라 동적으로 변하게 만든 것이며,
  * Perlin 노이즈의 핵심적인 시각적 개선점 중 하나다.
+ */
+
+/**
+ * 주파수 단계별 noise 값을 중첩하는 turbulence noise 알고리즘
+ *
+ *
+ * turbulence는 여러 주파수의 Perlin 노이즈를 계층적으로 누산하여 더욱 복잡한 패턴을 생성하는 기법이다.
+ *
+ * 각 단계마다 입력 좌표(temp_p)를 2배씩 스케일하여 점점 더 조밀한(high frequency) 노이즈를 생성하며,
+ * 동시에 각 단계에서의 가중치(weight)는 1.0 → 0.5 → 0.25 → ... 식으로 절반씩 줄여서,
+ * 고주파 노이즈는 희미하게, 저주파 노이즈는 강하게 반영되도록 조정한다.
+ *
+ * 결과적으로 low frequency noise를 기반으로 시각적 구조를 만들고,
+ * 그 위에 high frequency noise가 섬세하게 얹히는 방식으로 매우 자연스러운 텍스처 효과를 낸다.
+ *
+ * 마지막에 std::fabs(accum)을 사용하는 이유는,
+ * 노이즈 값이 음수일 경우 시각적으로 반대되는 패턴이 나타나므로,
+ * 이를 대칭되게 처리하여 marble texture 등에서 반복적이고 부드러운 무늬를 만들기 위함이다.
  */
 
 #endif /* PERLIN_HPP */
