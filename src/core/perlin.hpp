@@ -91,7 +91,7 @@ public:
   };
 
   // 입력 좌표 p 가 포함된 단위 큐브(모서리 길이가 1인 큐브)의 8개 꼭짓점에 랜덤 방향벡터(= gradient vector) 할당 후, 벡터 간 내적값을 거리 가중치로 보간하여 부드러운 노이즈 값을 반환하는 함수 (하단 필기 참고)
-  // -> perlin::noise_trilinear 로 생성한 noise 의 blocky 한 자국을 줄이기 위해 개선된 방법 (하단 필기 참고)
+  // -> perlin::noise_trilinear 로 생성한 noise 의 blocky 한 자국을 줄이기 위해 개선된 방법 (gradient vector 기반 perlin noise 관련 하단 필기 참고)
   double noise_perlin(const point3 &p) const
   {
     // 입력 좌표 p 가 단위 큐브 내에서 갖는 상대 좌표 (소수부) 추출 -> 좌표값 범위는 단위 큐브 내 좌표이므로 [0.0, 1.0] 사이
@@ -415,7 +415,7 @@ private:
  *
  * 이를 해결하기 위해 **perlin::noise_perlin** 은
  * 단위 큐브 상 8개의 lattice point마다 임의의 방향을 갖는 **랜덤 단위 벡터(= gradient vector)**를 할당하고,
- * 보간 시에는 각 꼭짓점으로부터 입력 좌표까지의 벡터(= offset vector)와 해당 랜덤 벡터 간의 **내적**을 사용한다.
+ * 보간 시에는 각 꼭짓점으로부터 단위 큐브 내 입력 좌표까지의 벡터(= offset vector)와 해당 랜덤 벡터 간의 **내적**을 사용한다.
  * 내적은 벡터 간 각도에 따라 결과가 달라지므로, **같은 꼭짓점이라도 입력 좌표 위치가 다르면 다른 보간 기준값**이 나오게 된다.
  *
  * 이렇게 하면 기존과는 달리 보간 기준값 자체(lerp 함수의 a, b)가 입력 위치마다 변동되므로,
