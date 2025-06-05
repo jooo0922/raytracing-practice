@@ -202,9 +202,13 @@ private:
  * z축 방향으로 규칙적인 물결 패턴(= sin 파)이 렌더링된다.
  *
  * 여기에 noise.turb(p, 7)를 위상(phase shift) 값으로 더함으로써,
- * 규칙적인 sin 곡선을 turbulence noise 기반으로 불규칙하게 흔든 형태의 패턴이 생성된다.
+ * 규칙적인 간격의 sin 파형을 turbulence noise 기반으로 불규칙하게 흔든 형태의 패턴이 생성된다.
  *
- * sin 함수의 입력값(= 입력 좌표의 z값이 기본.)이 turbulence noise 에 의해 불규칙적으로 변형됨에 따라
+ * ( -> return color(0.5f, 0.5f, 0.5f) * (1.0f + std::sin(10.0f * p.z())); 와 같이
+ * phase shift 코드를 제거하고, marble pattern 의 기초 베이스가 되는
+ * **z축 방향으로 규칙적인 간격의 sin 파형** 부터 눈으로 확인해보면 이해가 더 쉽다.)
+ *
+ * sin 함수의 입력값(= 입력 좌표 z값이 base.)이 turbulence noise 에 의해 불규칙적으로 변형됨에 따라
  * 결과적으로 스트라이프가 물결치듯 변형된 marble(대리석) 질감이 형성된다.
  * 이처럼 turbulence는 단순한 패턴에 변형을 주는 방식으로 자주 활용된다.
  */
