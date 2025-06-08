@@ -29,6 +29,13 @@ public:
   // quad의 AABB 반환 함수
   aabb bounding_box() const override { return bbox; };
 
+  // 순수 가상 함수 hit 재정의(override)
+  bool hit(const ray &r, interval ray_t, hit_record &rec) const override
+  {
+    // TODO : 구현 예정
+    return false;
+  };
+
 private:
   // quad 를 정의하는 데이터를 private 멤버변수로 정의
   // https://raytracing.github.io/books/RayTracingTheNextWeek.html#quadrilaterals/definingthequadrilateral 참고
