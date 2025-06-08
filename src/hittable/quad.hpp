@@ -26,6 +26,9 @@ public:
     bbox = aabb(bbox_diagonal1, bbox_diagonal2);
   };
 
+  // quad의 AABB 반환 함수
+  aabb bounding_box() const override { return bbox; };
+
 private:
   // quad 를 정의하는 데이터를 private 멤버변수로 정의
   // https://raytracing.github.io/books/RayTracingTheNextWeek.html#quadrilaterals/definingthequadrilateral 참고
