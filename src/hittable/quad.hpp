@@ -8,6 +8,23 @@ class quad : public hittable
 {
 public:
   // quad를 생성할 때 기준점 Q와 두 변 벡터 u, v, 그리고 재질 mat를 받음
+  quad(const point3 &Q, const vec3 &u, const vec3 &v, std::shared_ptr<material> mat)
+      : Q(Q), u(u), v(v), mat(mat)
+  {
+    // quad 생성과 동시에 aabb 설정
+    set_bounding_box();
+  };
+
+  // quad의 네 꼭짓점을 포함하는 AABB 계산
+  virtual void set_bounding_box()
+  {
+    // 두 대각선 방향으로 AABB 두 개 생성
+    auto bbox_diagonal1 = aabb(Q, Q + u + v); // 점 Q에서 점 Q+u+v 로 향하는 대각선을 감싸는 AABB 생성
+    auto bbox_diagonal2 = aabb(Q + u, Q + v); // 점 Q+u에서 점 Q+v 로 향하는 대각선을 감싸는 AABB 생성
+
+    // 두 AABB를 합쳐 quad 를 전부 감싸는 AABB 생성
+    bbox = aabb(bbox_diagonal1, bbox_diagonal2);
+  };
 
 private:
   // quad 를 정의하는 데이터를 private 멤버변수로 정의
