@@ -20,7 +20,11 @@ public:
 
   // 각 축별 슬랩(interval) 값을 직접 지정하여 AABB를 생성
   aabb(const interval &x, const interval &y, const interval &z)
-      : x(x), y(y), z(z) {};
+      : x(x), y(y), z(z)
+  {
+    // 각 축별 슬랩(interval) 두께가 0인 AABB 보정을 통해 ray 교차 검사 시 수치 오류 방지
+    pad_to_minimums();
+  };
 
   // 두 점을 받아서, 각 축에 대해 최소/최대 범위를 자동으로 계산하여 AABB를 생성
   aabb(const point3 &a, const point3 &b)
@@ -29,6 +33,9 @@ public:
     x = (a[0] <= b[0]) ? interval(a[0], b[0]) : interval(b[0], a[0]);
     y = (a[1] <= b[1]) ? interval(a[1], b[1]) : interval(b[1], a[1]);
     z = (a[2] <= b[2]) ? interval(a[2], b[2]) : interval(b[2], a[2]);
+
+    // 각 축별 슬랩(interval) 두께가 0인 AABB 보정을 통해 ray 교차 검사 시 수치 오류 방지
+    pad_to_minimums();
   };
 
   // 두 AABB 를 감싸는(= 합친) 가장 작은 AABB를 생성
@@ -122,6 +129,29 @@ public:
   // AABB 의 특수 상수 객체 선언
   static const aabb empty;    // 아무것도 감싸지 않는 최소 AABB
   static const aabb universe; // 모든 공간을 감싸는 무한한 AABB
+
+private:
+  // AABB 각 축별 슬랩(interval)의 최소 간격(pad) 보정 함수
+  void pad_to_minimums()
+  {
+    // AABB 각 축별 슬랩(interval)의 최소 보장 폭을 정의: 0이면 ray 교차 검사 시 수치적으로 문제가 생김
+    double delta = 0.0001;
+
+    // AABB 각 축별 슬랩(interval) 구간이 최소 보장 폭보다 작으면 delta 만큼 확정하여 안정화
+    // -> quad 같은 Flat 한 primitive 가 XY, YZ, ZX 평면에 놓였을 때, 나머지 축 방향 AABB 슬랩(interval) 두께가 0이 되는 것을 방지.
+    if (x.size() < delta)
+    {
+      x = x.expand(delta);
+    }
+    if (y.size() < delta)
+    {
+      y = y.expand(delta);
+    }
+    if (z.size() < delta)
+    {
+      z = z.expand(delta);
+    }
+  };
 };
 
 // 비어 있는 AABB 정의 -> 누적 bounding box 계산 시 초기값으로 사용
@@ -164,4 +194,32 @@ const aabb aabb::universe = aabb(interval::universe, interval::universe, interva
  *     광선이 AABB를 통과했다고 본다.
  */
 
-#endif/* AABB_HPP */
+/**
+ * AABB 각 축별 슬랩(interval)의 최소 간격(pad) 보정 이유
+ *
+ *
+ * Flat한 도형(예: quad, triangle 등 평면 위에 있는 primitive)들이 XY, YZ, ZX 평면에 놓일 경우,
+ * 한 축 방향으로 두께(폭)가 0이 되며, 이는 axis-aligned bounding box (AABB)의
+ * 해당 축 슬랩(interval) 크기가 0이 된다는 것을 의미한다.
+ *
+ * 이처럼 0 두께를 가진 AABB는 다음과 같은 수치적 문제를 유발할 수 있다:
+ *
+ * 1. AABB 내부 판정에서 오차 발생:
+ *    - 예: ray-AABB 교차 판정 시, float 연산의 부동소수점 오차로 인해
+ *      실제로는 교차하는 ray가 "겹치지 않는다"고 잘못 판정되는 경우가 있음.
+ *
+ * 2. BVH(Box Volume Hierarchy) 트리 생성 시 문제:
+ *    - AABB의 크기가 0이면 자식 박스의 분할, 중첩 범위 계산 등에서
+ *      경계가 불안정해져 BVH 최적화가 망가짐.
+ *
+ * 3. AABB 크기를 이용한 최적화 알고리즘에서 divide-by-zero 오류 발생 가능:
+ *    - 예: 면적 기반 분할(SAH) 평가 시 면적이 0이면 잘못된 비용 계산 발생.
+ *
+ * 이를 방지하기 위해 각 축의 길이가 최소 delta(예: 0.0001)보다 작을 경우,
+ * 인위적으로 delta만큼 확장(pad)하여 유효한 부피를 가진 AABB로 보정한다.
+ *
+ * 이 보정은 geometry 자체를 바꾸지 않으며,
+ * 오직 bounding volume의 안정성을 확보하기 위한 처리이다.
+ */
+
+#endif /* AABB_HPP */
