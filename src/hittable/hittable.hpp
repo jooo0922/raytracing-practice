@@ -30,7 +30,7 @@ public:
   {
     // ray - outward_normal 내적값 부호에 따라 ray 가 내부/외부에 위치하는 지 결정
     front_face = dot(r.direction(), outward_normal) < 0;
-    // ray 위치에 따라 ray - hittable 교차점 normal 과 ray 가 항상 방대 방향을 향하도록 계산
+    // ray 위치에 따라 ray - hittable 교차점 normal 과 ray 가 항상 반대 방향을 향하도록 계산
     normal = front_face ? outward_normal : -outward_normal;
   };
 };
