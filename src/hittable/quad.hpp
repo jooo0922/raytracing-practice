@@ -18,6 +18,9 @@ public:
     // 평면 방정식의 상수 D = n ⋅ Q (Q는 평면 위의 고정된 점) 계산
     D = dot(normal, Q);
 
+    // w = n / (n ⋅ n), quad 가 속한 평면 내 임의의 점 P 를 UV좌표계로 변환하기 위한 캐시 벡터 (하단 필기 참고)
+    w = n / dot(n, n);
+
     // quad 생성과 동시에 aabb 설정
     set_bounding_box();
   };
@@ -78,6 +81,7 @@ private:
   // https://raytracing.github.io/books/RayTracingTheNextWeek.html#quadrilaterals/definingthequadrilateral 참고
   point3 Q;                      // quad의 기준 꼭지점
   vec3 u, v;                     // quad의 두 변 벡터
+  vec3 w;                        // quad 가 속한 평면 내 임의의 점 P 좌표를 UV 좌표계로 변환하기 위한 캐시 벡터
   std::shared_ptr<material> mat; // quad에 충돌한 ray 의 산란 계산 시 적용할 material 포인터 멤버변수(reference counting 기반 smart pointer 로 객체 수명 관리)
   aabb bbox;                     // quad를 감싸는 AABB
   vec3 normal;                   // quad 가 속한 평면의 법선 벡터(= 평면의 방향)
@@ -137,6 +141,54 @@ private:
  * 평면 방정식과 ray 교차 판정식에 사용되는 핵심 상수로 사용된다.
  *
  * 이후에는 교차 지점이 실제로 quad의 내부에 포함되는지를 별도로 판단하게 된다.
+ */
+
+/**
+ * 캐시 벡터 w 를 사용하여 quad 가 속한 평면 내 임의의 점 P 를 UV좌표계로 변환하기
+ *
+ *
+ * quad는 평면 위에 정의된 도형이며, 이 평면 위의 한 점 P가 quad 내부에 포함되는지를 판단하려면
+ * P가 평면 내에서 어디에 위치해 있는지를 알아야 한다. 이를 위해 평면의 로컬 좌표계인 (u, v) 축을
+ * 기준으로 하는 2D 좌표값 (α, β)를 계산한다. 이 좌표값은 다음 조건을 만족한다:
+ *
+ *    P = Q + α·u + β·v
+ *
+ * 여기서:
+ * - Q: quad의 기준점 (로컬 좌표계의 원점 역할)
+ * - u, v: quad의 두 변 벡터 (로컬 좌표계의 기저 축 역할)
+ * - α, β: 각각 u, v 방향으로 얼마나 이동했는지를 나타내는 스칼라값
+ *
+ * α, β를 구하기 위해 우선 p = P - Q 로 잡고,
+ * p 를 다음과 같이 식 변형으로 표현할 수 있음을 확인한다:
+ *    P = Q + α·u + β·v
+ *    → P - Q = α·u + β·v
+ *    → p = α·u + β·v
+ *
+ * 위 식들을 바탕으로 두 벡터식 외적을 전개하면 다음을 얻는다:
+ * (구체적인 전개 과정은 https://raytracing.github.io/books/RayTracingTheNextWeek.html#quadrilaterals/derivingtheplanarcoordinates 참고)
+ *
+ *    v × p = α (v × u)
+ *    u × p = β (u × v)
+ *
+ * 이제 위 식을 두 계수 α, β 에 대한 식으로 변형하면 α, β 를 구할 수 있으므로,
+ * 양변에 (v × u) 와 (u × v) 로 나누면 될까? -> NO! 벡터 나눗셈이 정의되지 않기 때문.
+ *
+ * 그 대신, 양변에 평면의 법선 벡터 n = u × v 를 내적(dot product)하여
+ * 스칼라 방정식으로 바꾸면 다음과 같은 형태가 된다:
+ *
+ *    α = (n ⋅ (p × v)) / (n ⋅ (u × v))
+ *    β = (n ⋅ (u × p)) / (n ⋅ (u × v))
+ *
+ * 여기서 n = u × v 이므로, 분모는 n ⋅ n 이 되고, 이를 미리 계산하여 벡터 w = n / (n ⋅ n) 를 만들어 놓으면
+ * 계산이 다음처럼 단순화된다:
+ *
+ *    α = w ⋅ (p × v)
+ *    β = w ⋅ (u × p)
+ *
+ * 이때 w는 quad 평면에 대해 한 번만 계산하면 되므로, 생성자에서 미리 계산하여 멤버 변수로 캐시해두는 것이 효율적이다.
+ *
+ * 최종적으로 이 α, β 값이 모두 [0, 1] 범위 내에 있을 경우 해당 점 P는 quad 내부에 존재한다고 볼 수 있고,
+ * 동시에 이 값을 UV 텍스처 좌표로 사용할 수도 있다.
  */
 
 #endif /* QUAD_HPP */
