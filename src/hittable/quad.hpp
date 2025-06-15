@@ -39,8 +39,38 @@ public:
   // 순수 가상 함수 hit 재정의(override)
   bool hit(const ray &r, interval ray_t, hit_record &rec) const override
   {
-    // TODO : 구현 예정
-    return false;
+    /** Ray - Plane(quad 가 속한 평면) intersection 검사 (하단 관련 필기 참고) */
+
+    // n ⋅ d → 판별식 분모 계산
+    auto denom = dot(normal, r.direction());
+
+    // 판별식 분모가 0 이면 t 의 해가 존재하지 않음. → 기하학적으로 ray 와 평면이 평행하다는 뜻.
+    // 따라서, 판별식 분모가 0 에 가까울수록 ray가 평면과 거의 평행함. → 교차 없음으로 간주.
+    if (std::fabs(denom) < 1e-8)
+    {
+      return false;
+    }
+
+    // 평면과의 교차 지점 파라미터 t(= 교차 판별식) 계산
+    auto t = (D - dot(normal, r.origin())) / denom;
+
+    // t 값(= 교차 지점)이 ray의 유효한 범위 밖이면 무시
+    if (!ray_t.contains(t))
+    {
+      return false;
+    }
+
+    // 교차 지점 위치 계산
+    auto intersection = r.at(t);
+
+    // hit_record 에 정보 기록
+    rec.t = t;
+    rec.p = intersection;
+    rec.mat = mat;
+    rec.set_face_normal(r, normal); // 앞면/뒷면 여부 판정 포함한 노멀 설정
+
+    // 여기까지 통과했으면 교차 성공으로 판단
+    return true;
   };
 
 private:
@@ -55,7 +85,7 @@ private:
 };
 
 /**
- * 주어진 quad 가 속한 평면 정의 및 평면 - Ray 교차 검사
+ * 주어진 quad 가 속한 평면의 수학적 정의(= 평면의 방정식)
  *
  *
  * 이 quad는 평면 위에 정의된 사각형이다. 이를 위해 먼저 quad가 놓인 평면의 수학적 정의가 필요하다.
@@ -79,8 +109,13 @@ private:
  *
  * 이때 D는 단순한 숫자가 아니라, **법선 벡터와 기준점 간의 내적값으로부터 계산된 상수**이며,
  * 그 평면이 어디에 위치하는지를 결정짓는 중요한 수치다.
+ */
+
+/**
+ * Ray - Plane(quad 가 속한 평면) intersection 검사
  *
- * 이제 ray와의 교차점을 계산한다.
+ *
+ * 위 주석에서 유도한 평면의 방정식 n ⋅ P = D 를 기반으로 ray와의 교차점을 계산한다.
  * ray는 다음과 같은 수식으로 표현된다:
  *    R(t) = P₀ + t·d
  *    - P₀: ray의 시작점
