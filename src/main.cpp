@@ -6,6 +6,7 @@
 #include "hittable/hittable.hpp"
 #include "hittable/hittable_list.hpp"
 #include "hittable/sphere.hpp"
+#include "hittable/quad.hpp"
 
 // bouncing spheres scene 렌더링 함수
 void bouncing_spheres(std::ofstream &output_file)
@@ -197,6 +198,48 @@ void perlin_sphere(std::ofstream &output_file)
   cam.render(output_file, hittable_list(world));
 };
 
+// quad scene 렌더링 함수
+void quads(std::ofstream &output_file)
+{
+  /** world(scene) 역할을 수행하는 hittable_list 생성 및 hittable object 추가 */
+  hittable_list world;
+
+  /** 각 quad 객체에 적용할 재질(Material)을 shared_ptr로 생성 */
+  auto left_red = std::make_shared<lambertian>(color(1.0f, 0.2f, 0.2f));
+  auto back_green = std::make_shared<lambertian>(color(0.2f, 1.0f, 0.2f));
+  auto right_blue = std::make_shared<lambertian>(color(0.2f, 0.2f, 1.0f));
+  auto upper_orange = std::make_shared<lambertian>(color(1.0f, 0.5f, 0.0f));
+  auto lower_teal = std::make_shared<lambertian>(color(0.2f, 0.8f, 0.8f));
+
+  // 서로 다른 색상의 material 을 전달하여 5개의 quad 생성 후 world 에 추가
+  world.add(std::make_shared<quad>(point3(-3.0f, -2.0f, 5.0f), vec3(0.0f, 0.0f, -4.0f), vec3(0.0f, 4.0f, 0.0f), left_red));
+  world.add(std::make_shared<quad>(point3(-2.0f, -2.0f, 0.0f), vec3(4.0f, 0.0f, 0.0f), vec3(0.0f, 4.0f, 0.0f), back_green));
+  world.add(std::make_shared<quad>(point3(3.0f, -2.0f, 1.0f), vec3(0.0f, 0.0f, 4.0f), vec3(0.0f, 4.0f, 0.0f), right_blue));
+  world.add(std::make_shared<quad>(point3(-2.0f, 3.0f, 1.0f), vec3(4.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, 4.0f), upper_orange));
+  world.add(std::make_shared<quad>(point3(-2.0f, -3.0f, 5.0f), vec3(4.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, -4.0f), lower_teal));
+
+  /** camera 객체 생성 및 이미지 렌더링 수행 */
+  camera cam;
+
+  // 주요 이미지 파라미터 설정
+  cam.image_width = 400;
+  cam.aspect_ratio = 1.0f;
+  cam.samples_per_pixel = 100;
+  cam.max_depth = 50;
+
+  // camera transform 관련 파라미터 설정
+  cam.vfov = 80.0f;
+  cam.lookfrom = point3(0.0f, 0.0f, 9.0f);
+  cam.lookat = point3(0.0f, 0.0f, 0.0f);
+  cam.vup = vec3(0.0f, 1.0f, 0.0f);
+
+  // defocus blur 관련 파라미터 성정
+  cam.defocus_angle = 0.0f;
+
+  // 카메라 및 viewport 파라미터 내부에서 자동 초기화 후 .ppm 이미지 렌더링
+  cam.render(output_file, world);
+};
+
 int main(int argc, char *argv[])
 {
   /** 명령줄 인수로 출력 파일(= .ppm 이미지 파일) 경로 전달받기 */
@@ -218,7 +261,7 @@ int main(int argc, char *argv[])
   }
 
   // switch 문으로 렌더링을 원하는 장면 선택 가능
-  switch (4)
+  switch (5)
   {
   case 1:
     bouncing_spheres(output_file);
@@ -231,6 +274,9 @@ int main(int argc, char *argv[])
     break;
   case 4:
     perlin_sphere(output_file);
+    break;
+  case 5:
+    quads(output_file);
     break;
   }
 
