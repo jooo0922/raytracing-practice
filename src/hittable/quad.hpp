@@ -68,6 +68,20 @@ public:
 
     /** 평면 내 임의의 교차점 P 를 UV 좌표계로 변환하기 (하단 관련 필기 참고) */
 
+    // Q 기준으로 평면 위 교차점까지의 벡터 p = P - Q 계산
+    vec3 planar_hitpt_vector = intersection - Q;
+
+    // α = w ⋅ (p × v), β = w ⋅ (u × p)
+    // → P = Q + αu + βv 를 만족하는 α, β 구함
+    auto alpha = dot(w, cross(planar_hitpt_vector, v));
+    auto beta = dot(w, cross(u, planar_hitpt_vector));
+
+    // UV 좌표계로 변환된 α, β 값으로 교차점 P 가 quad 내부에 있는지 검사 -> 교차점 P 가 quad 외부에 있다면 무시
+    if (!is_interior(alpha, beta, rec))
+    {
+      return false;
+    }
+
     // hit_record 에 정보 기록
     rec.t = t;
     rec.p = intersection;
