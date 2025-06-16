@@ -66,6 +66,8 @@ public:
     // 교차 지점 위치 계산
     auto intersection = r.at(t);
 
+    /** 평면 내 임의의 교차점 P 를 UV 좌표계로 변환하기 (하단 관련 필기 참고) */
+
     // hit_record 에 정보 기록
     rec.t = t;
     rec.p = intersection;
@@ -73,6 +75,26 @@ public:
     rec.set_face_normal(r, normal); // 앞면/뒷면 여부 판정 포함한 노멀 설정
 
     // 여기까지 통과했으면 교차 성공으로 판단
+    return true;
+  };
+
+  // quad 내부 여부 판단 함수
+  virtual bool is_interior(double a, double b, hit_record &rec) const
+  {
+    /** UV 좌표계로 변환된 α, β 값이 [0, 1] 범위 내에 있는지 검사하여 quad 내부 여부 판단 */
+
+    // [0, 1] 범위의 interval 객체 생성
+    interval unit_interval = interval(0.0f, 1.0f);
+
+    // α, β 값이 [0, 1] 범위 밖에 있으면 quad 밖의 평면 영역 → miss 처리
+    if (!unit_interval.contains(a) || !unit_interval.contains(b))
+    {
+      return false;
+    }
+
+    // α, β 값이 [0, 1] 범위 내에 있으면 quad 내부의 평면 영역 → hit 처리 및 교차점의 UV 좌표로 저장
+    rec.u = a;
+    rec.v = b;
     return true;
   };
 
