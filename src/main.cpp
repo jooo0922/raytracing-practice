@@ -83,6 +83,8 @@ void bouncing_spheres(std::ofstream &output_file)
   cam.aspect_ratio = 16.0f / 9.0f;
   cam.samples_per_pixel = 50;
   cam.max_depth = 20;
+  // ray 와 충돌한 물체가 없을 경우 반환할 scene 배경색(solid color. no gradient) 정의
+  cam.background = color(0.7f, 0.8f, 1.0f);
 
   // camera transform 관련 파라미터 설정
   cam.vfov = 20.0f;
@@ -119,6 +121,8 @@ void checkered_spheres(std::ofstream &output_file)
   cam.aspect_ratio = 16.0f / 9.0f;
   cam.samples_per_pixel = 50;
   cam.max_depth = 20;
+  // ray 와 충돌한 물체가 없을 경우 반환할 scene 배경색(solid color. no gradient) 정의
+  cam.background = color(0.7f, 0.8f, 1.0f);
 
   // camera transform 관련 파라미터 설정
   cam.vfov = 20.0f;
@@ -150,6 +154,8 @@ void earth(std::ofstream &output_file)
   cam.aspect_ratio = 16.0f / 9.0f;
   cam.samples_per_pixel = 100;
   cam.max_depth = 50;
+  // ray 와 충돌한 물체가 없을 경우 반환할 scene 배경색(solid color. no gradient) 정의
+  cam.background = color(0.7f, 0.8f, 1.0f);
 
   // camera transform 관련 파라미터 설정
   cam.vfov = 20.0f;
@@ -184,6 +190,8 @@ void perlin_sphere(std::ofstream &output_file)
   cam.aspect_ratio = 16.0f / 9.0f;
   cam.samples_per_pixel = 100;
   cam.max_depth = 50;
+  // ray 와 충돌한 물체가 없을 경우 반환할 scene 배경색(solid color. no gradient) 정의
+  cam.background = color(0.7f, 0.8f, 1.0f);
 
   // camera transform 관련 파라미터 설정
   cam.vfov = 20.0f;
@@ -226,6 +234,8 @@ void quads(std::ofstream &output_file)
   cam.aspect_ratio = 1.0f;
   cam.samples_per_pixel = 100;
   cam.max_depth = 50;
+  // ray 와 충돌한 물체가 없을 경우 반환할 scene 배경색(solid color. no gradient) 정의
+  cam.background = color(0.7f, 0.8f, 1.0f);
 
   // camera transform 관련 파라미터 설정
   cam.vfov = 80.0f;
