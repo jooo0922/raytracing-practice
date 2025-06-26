@@ -268,6 +268,8 @@ void simple_light(std::ofstream &output_file)
    */
   auto difflight = std::make_shared<diffuse_light>(color(4.0f, 4.0f, 4.0f));
 
+  // 광원으로 사용할 sphere 생성 후 world 에 추가
+  world.add(std::make_shared<sphere>(point3(0.0f, 7.0f, 0.0f), 2.0f, difflight));
   // 광원으로 사용할 quad 생성 후 world 에 추가
   world.add(std::make_shared<quad>(point3(3.0f, 1.0f, -2.0f), vec3(2.0f, 0.0f, 0.0f), vec3(0.0f, 2.0f, 0.0f), difflight));
 
@@ -402,4 +404,8 @@ int main(int argc, char *argv[])
  *
  * 따라서, 장면을 실제로 밝게 비추기 위해서는 광원 색상을 (4,4,4)와 같이
  * 고강도로 설정하는 것이 필요합니다.
+ *
+ * -> 이 개념은 HDR 렌더링(High Dynamic Range Rendering)의 핵심 아이디어 중 하나
+ * https://github.com/jooo0922/opengl-study/blob/main/AdvancedLighting/HDR/MyShaders/hdr.fs
+ * https://github.com/jooo0922/opengl-study/blob/main/AdvancedLighting/HDR/hdr.cpp
  */
