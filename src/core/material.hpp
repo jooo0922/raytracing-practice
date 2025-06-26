@@ -7,6 +7,16 @@
 
 /**
  * material 추상 클래스
+ *
+ * 모든 material 클래스가 상속받는 기본 클래스이며,
+ * 산란(scatter)과 방출(emission) 동작을 다형성으로 정의합니다.
+ *
+ * 디자인 설계 의도:
+ * - 모든 material 에 대해 `emitted()` 함수를 호출 가능하도록 일관된 인터페이스 제공
+ * - 기본적으로 대부분의 물체는 빛을 방출하지 않으므로 black(0,0,0)을 반환
+ * - 이로 인해 diffuse_light 와 같은 '광원인 물체'에 적용할 material 만 `emitted()`를 오버라이드하면 됨
+ * - 호출자는 material 종류를 알 필요 없이 항상 `scatter()`와 `emitted()`를 호출할 수 있음
+ *   → 깔끔하고 확장 가능한 설계 구조 확보
  */
 class material
 {
@@ -14,6 +24,13 @@ public:
   // material 을 상속받는 자식 클래스들의 소멸자도 정상 호출되도록 부모 클래스의 소멸자를 가상 소멸자로 정의
   // https://github.com/jooo0922/cpp-study/blob/main/Chapter12/Chapter12_04/Chapter12_04.cpp 참고
   virtual ~material() = default;
+
+  // 해당 material 이 적용된 물체가 방출하는 빛을 정의하는 인터페이스를 가상함수로 정의 -> 방출형 material 클래스에서만 세부 동작 재정의
+  virtual color emitted(double u, double v, const point3 &p) const
+  {
+    // 기본적으로 대부분의 material 은 빛을 방출하지 않음 (기본값: black(0,0,0))
+    return color(0.0f, 0.0f, 0.0f);
+  };
 
   // ray 충돌 시 산란 방식을 정의하는 인터페이스를 자식 클래스에서 재정의하도록 가상함수로 정의 -> 재정의할 세부 동작 encapsulate
   virtual bool scatter(const ray &r_in, const hit_record &rec, color &attenuation, ray &scattered) const { return false; };
