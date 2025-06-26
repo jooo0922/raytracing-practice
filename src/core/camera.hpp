@@ -14,6 +14,7 @@ public:
   int image_width = 100;      // .ppm 이미지 너비 (기본값 100. 이미지 높이는 너비에 aspect_ratio 를 곱해서 계산.)
   int samples_per_pixel = 10; // antialiasing 을 위해 사용할 각 pixel 주변 random sample 개수
   int max_depth = 10;         // ray bouncing 최대 횟수 (= 각 ray 마다 최대 재귀 순회 깊이 제한)
+  color background;           // camera::ray_color() 에서 광선이 아무 물체와도 교차하지 않을 경우 반환되는 배경색(background)
 
   double vfov = 90.0f;                        // camera frustum 의 수직 방향 fov(field of view) 각도
   point3 lookfrom = point3(0.0f, 0.0f, 0.0f); // 카메라 위치(카메라 좌표계 기준 원점)
@@ -188,33 +189,46 @@ private:
     hit_record rec;
 
     // ray 충돌 범위가 t = 0.001 이하일 경우, 불필요한 조명 감쇄를 일으키는 충돌로 판정하여 무시함. (하단 필기 참고)
-    if (world.hit(r, interval(0.001, infinity), rec))
+    if (!world.hit(r, interval(0.001, infinity), rec))
     {
-      // 하나라도 충돌한 hittable object 가 존재한다면, rec 변수에는 현재 ray 방향에서 카메라로부터 가장 가까운 교차점의 충돌 정보가 기록됨.
-      // 충돌 지점 p 의 normal vector 중심의 반구 영역 내 랜덤 방향벡터 생성
-      // vec3 direction = random_on_hemisphere(rec.normal);
-
-      // ray 충돌 지점 object 의 산란 동작이 재정의된 material::scatter(...) 인터페이스를 호출하여 산란할 ray(= scattered)과 감쇄(= attenuation) 계산
-      ray scattered;
-      color attenuation;
-      if (rec.mat->scatter(r, rec, attenuation, scattered))
-      {
-        // (일정 확률로)산란할 ray 생성 성공 시 처리
-        // ray 를 산란하여 recursive 하게 진행했을 때 반사된 빛(색상)에 감쇄(= attenuation)를 적용하여 반환함.
-        return attenuation * ray_color(scattered, depth - 1, world);
-      }
-      // (일정 확률로)산란할 ray 생성 실패(= 현재 충돌한 ray 가 완전히 흡수되었다고 가정) 시 처리
-      // 기여도가 없는 영벡터 색상(검은색) 반환
-      return color(0.0f, 0.0f, 0.0f);
+      // 광선이 장면 내 어떤 물체와도 교차하지 않았을 경우 → 배경색 반환
+      return background;
     }
 
-    // 반직선을 길이가 1인 단위 벡터로 정규화
-    vec3 unit_direction = unit_vector(r.direction());
-    // [-1.0, 1.0] 범위로 정규화된 단위 벡터의 y 값을 [0.0, 1.0] 범위로 맵핑
-    auto a = 0.5f * (unit_direction.y() + 1.0f);
+    // 광선이 출동한 물체의 material 에서 방출(emission)되는 색상을 미리 가져와 복사해 둠. (ex> 자체 발광하는 광원)
+    color color_from_emission = rec.mat->emitted(rec.u, rec.v, rec.p);
 
-    // 흰색과 파란색을 [0.0, 1.0] 범위의 a값에 따라 혼합(선형보간)하여 .ppm 에 출력할 색상 계산
-    return (1.0f - a) * color(1.0f, 1.0f, 1.0f) + a * color(0.5f, 0.7f, 1.0f);
+    // ray 충돌 지점 object 의 산란 동작이 재정의된 material::scatter(...) 인터페이스를 호출하여 산란할 ray(= scattered)과 감쇄(= attenuation) 계산
+    ray scattered;
+    color attenuation;
+
+    /**
+     * (일정 확률로)산란할 ray 생성 실패(= 현재 충돌한 ray 가 완전히 흡수되었다고 가정) 시 또는
+     * 물체가 광선을 산란시키지 않는 경우 (예: diffuse_light 이 적용된 광원) → 방출색만 반환
+     *
+     * 물체가 광원(diffuse_light)가 아니라 산란이 실패한 경우라고 하더라도,
+     * 대부분의 material 방출색이 기여도가 없는 영벡터 색상(검은색)을 반환하므로,
+     * 기존 산란 실패 시 처리되는 동작을 그대로 보존 가능.
+     */
+    if (!rec.mat->scatter(r, rec, attenuation, scattered))
+    {
+      return color_from_emission;
+    }
+
+    // (일정 확률로)산란할 ray 생성 성공 시 처리
+    // ray 를 산란하여 recursive 하게 진행했을 때 반사된 빛(색상)에 감쇄(= attenuation)를 적용하여 산란색(scattering) 계산.
+    color color_from_scatter = attenuation * ray_color(scattered, depth - 1, world);
+
+    /**
+     * 물체와 충돌 후 산란할 ray 생성 성공 시 최종 반사 색상 계산
+     *
+     * - 배경색(background)은 광선이 아무 물체와도 교차하지 않을 경우 반환.
+     * - 방출색(emission)은 표면이 자체적으로 방출하는 빛.
+     * - 산란색(scattering)은 반사/굴절된 광선에 의해 전달된 간접 조명.
+     *
+     * -> 최종 색상 = 방출색 + 산란색
+     */
+    return color_from_emission + color_from_scatter;
   };
 
 private:
