@@ -207,6 +207,39 @@ private:
 };
 
 /**
+ * 광원 객체에 사용되는 방출형 material 클래스 정의
+ *
+ * 이 material 클래스는 장면 내에서 실제 빛을 발산하는 광원(예: area light, glowing object 등)에 적용됨.
+ * 반사는 수행하지 않으며, 주어진 텍스처(혹은 단일 색상)를 기반으로 한 방출 색상을 반환.
+ *
+ * 특징:
+ * - `scatter()`는 구현하지 않음 → 광선을 반사하지 않음
+ * - `emitted()`를 통해 표면의 텍스처로부터 방출 색상을 반환
+ * - 다양한 텍스처 기반 패턴 또는 단색 방출 광원 모두 지원 가능
+ *
+ * 사용 예:
+ * - 직사각형 영역광, 발광하는 구체, 조명 오브젝트 등에 적용
+ */
+class diffuse_light : public material
+{
+public:
+  diffuse_light(std::shared_ptr<texture> tex) : tex(tex) {};
+  diffuse_light(const color &emit) : tex(std::make_shared<solid_color>(emit)) {};
+
+  /**
+   * 이 material 에서 방출되는 색상을 반환
+   * -> 일반적으로 텍스처(혹은 색상)를 그대로 반환하고, 반사는 하지 않음. (단순 방출체(= 광원))
+   */
+  color emitted(double u, double v, const point3 &p) const override
+  {
+    return tex->value(u, v, p);
+  };
+
+private:
+  std::shared_ptr<texture> tex;
+};
+
+/**
  * material::scatter() 역할
  *
  *
