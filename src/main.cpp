@@ -297,6 +297,50 @@ void simple_light(std::ofstream &output_file)
   cam.render(output_file, world);
 };
 
+// cornell box 렌더링 함수
+void cornell_box(std::ofstream &output_file)
+{
+  /** world(scene) 역할을 수행하는 hittable_list 생성 및 hittable object 추가 */
+  hittable_list world;
+
+  /** 각 quad 객체에 적용할 재질(Material)을 shared_ptr로 생성 */
+  auto red = std::make_shared<lambertian>(color(0.65f, 0.05f, 0.05f));
+  auto white = std::make_shared<lambertian>(color(0.73f, 0.73f, 0.73f));
+  auto green = std::make_shared<lambertian>(color(0.12f, 0.45f, 0.15f));
+  auto light = std::make_shared<diffuse_light>(color(15.0f, 15.0f, 15.0f)); // 광원 quad 에 적용할 재질을 shared_ptr 로 생성
+
+  // 서로 다른 색상의 material 을 전달하여 cornell box 를 구성하는 quad 생성 후 world 에 추가
+  world.add(std::make_shared<quad>(point3(555.0f, 0.0f, 0.0f), vec3(0.0f, 555.0f, 0.0f), vec3(0.0f, 0.0f, 555.0f), green));
+  world.add(std::make_shared<quad>(point3(0.0f, 0.0f, 0.0f), vec3(0.0f, 555.0f, 0.0f), vec3(0.0f, 0.0f, 555.0f), red));
+  world.add(std::make_shared<quad>(point3(343.0f, 554.0f, 332.0f), vec3(-130.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, -105.0f), light)); // 광원 quad 생성 후 world 에 추가
+  world.add(std::make_shared<quad>(point3(0.0f, 0.0f, 0.0f), vec3(555.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, 555.0f), white));
+  world.add(std::make_shared<quad>(point3(555.0f, 555.0f, 555.0f), vec3(-555.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, -555.0f), white));
+  world.add(std::make_shared<quad>(point3(0.0f, 0.0f, 555.0f), vec3(555.0f, 0.0f, 0.0f), vec3(0.0f, 555.0f, 0.0f), white));
+
+  /** camera 객체 생성 및 이미지 렌더링 수행 */
+  camera cam;
+
+  // 주요 이미지 파라미터 설정
+  cam.image_width = 600;
+  cam.aspect_ratio = 1.0f;
+  cam.samples_per_pixel = 200;
+  cam.max_depth = 50;
+  // ray 와 충돌한 물체가 없을 경우 반환할 scene 배경색(solid color. no gradient) 정의
+  cam.background = color(0.0f, 0.0f, 0.0f);
+
+  // camera transform 관련 파라미터 설정
+  cam.vfov = 40.0f;
+  cam.lookfrom = point3(278.0f, 278.0f, -800.0f);
+  cam.lookat = point3(278.0f, 278.0f, 0.0f);
+  cam.vup = vec3(0.0f, 1.0f, 0.0f);
+
+  // defocus blur 관련 파라미터 성정
+  cam.defocus_angle = 0.0f;
+
+  // 카메라 및 viewport 파라미터 내부에서 자동 초기화 후 .ppm 이미지 렌더링
+  cam.render(output_file, world);
+};
+
 int main(int argc, char *argv[])
 {
   /** 명령줄 인수로 출력 파일(= .ppm 이미지 파일) 경로 전달받기 */
@@ -318,7 +362,7 @@ int main(int argc, char *argv[])
   }
 
   // switch 문으로 렌더링을 원하는 장면 선택 가능
-  switch (6)
+  switch (7)
   {
   case 1:
     bouncing_spheres(output_file);
@@ -337,6 +381,9 @@ int main(int argc, char *argv[])
     break;
   case 6:
     simple_light(output_file);
+    break;
+  case 7:
+    cornell_box(output_file);
     break;
   }
 
