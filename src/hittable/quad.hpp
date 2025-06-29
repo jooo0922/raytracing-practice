@@ -2,6 +2,7 @@
 #define QUAD_HPP
 
 #include "hittable.hpp"
+#include "hittable_list.hpp"
 
 // quadrilateral(정확히는 평행사변형) 클래스를 hittable(피충돌 물체) 추상 클래스로부터 상속받아 정의
 class quad : public hittable
@@ -122,6 +123,39 @@ private:
   aabb bbox;                     // quad를 감싸는 AABB
   vec3 normal;                   // quad 가 속한 평면의 법선 벡터(= 평면의 방향)
   double D;                      // quad 가 속한 평면 방정식의 상수 D = n ⋅ Q
+};
+
+// quad 기반 3D 박스 생성 함수: 두 대각선 정점 a, b와 재질 mat을 받아 여섯 개의 면으로 구성된 hittable_list를 반환
+inline std::shared_ptr<hittable_list> box(const point3 &a, const point3 &b, std::shared_ptr<material> mat)
+{
+  // 박스 여섯 면을 담을 hittable_list를 생성
+  auto sides = std::make_shared<hittable_list>();
+
+  // 두 점 a, b 중 작은 값을 min, 큰 값을 max로 설정하여 3D box 의 min, max 범위 지정
+  auto min = point3(std::fmin(a.x(), b.x()), std::fmin(a.y(), b.y()), std::fmin(a.z(), b.z()));
+  auto max = point3(std::fmax(a.x(), b.x()), std::fmax(a.y(), b.y()), std::fmax(a.z(), b.z()));
+
+  // 3D box 의 각 축 방향 벡터 계산: 박스의 크기 벡터로 사용됨
+  auto dx = vec3(max.x() - min.x(), 0.0f, 0.0f); // x축 방향 크기 벡터
+  auto dy = vec3(0.0f, max.y() - min.y(), 0.0f); // y축 방향 크기 벡터
+  auto dz = vec3(0.0f, 0.0f, max.z() - min.z()); // z축 방향 크기 벡터
+
+  /** 박스의 크기 벡터와 min, max 값으로 3D box 각 면의 quad 파라미터 계산 및 생성 */
+  // 정면(front) 면: (min x, min y, max z) 지점을 기준점 Q 로 정하고 dx, dy 방향으로 펼침
+  sides->add(std::make_shared<quad>(point3(min.x(), min.y(), max.z()), dx, dy, mat));
+  // 오른쪽(right) 면: (max x, min y, max z) 지점을 기준점 Q 로 정하고 -dz, dy 방향으로 펼침
+  sides->add(std::make_shared<quad>(point3(max.x(), min.y(), max.z()), -dz, dy, mat));
+  // 뒷면(back) 면: (max x, min y, min z) 지점을 기준점 Q 로 정하고 -dx, dy 방향으로 펼침
+  sides->add(std::make_shared<quad>(point3(max.x(), min.y(), min.z()), -dx, dy, mat));
+  // 왼쪽(left) 면: (min x, min y, min z) 지점을 기준점 Q 로 정하고 dz, dy 방향으로 펼침
+  sides->add(std::make_shared<quad>(point3(min.x(), min.y(), min.z()), dz, dy, mat));
+  // 윗면(top) 면: (min x, max y, max z) 지점을 기준점 Q 로 정하고 dx, -dz 방향으로 펼침
+  sides->add(std::make_shared<quad>(point3(min.x(), max.y(), max.z()), dx, -dz, mat));
+  // 바닥(bottom) 면: (min x, min y, min z) 지점을 기준점 Q 로 정하고 dx, dz 방향으로 펼침
+  sides->add(std::make_shared<quad>(point3(min.x(), min.y(), min.z()), dx, dz, mat));
+
+  // 박스 여섯 면이 담긴 hittable_list 반환
+  return sides;
 };
 
 /**
