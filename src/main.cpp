@@ -317,13 +317,17 @@ void cornell_box(std::ofstream &output_file)
   world.add(std::make_shared<quad>(point3(555.0f, 555.0f, 555.0f), vec3(-555.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, -555.0f), white));
   world.add(std::make_shared<quad>(point3(0.0f, 0.0f, 555.0f), vec3(555.0f, 0.0f, 0.0f), vec3(0.0f, 555.0f, 0.0f), white));
 
+  // cornell box 내부에 배치할 2개의 block 생성 후 world 에 추가
+  world.add(box(point3(130.0f, 0.0f, 65.0f), point3(295.0f, 165.0f, 230.0f), white));
+  world.add(box(point3(265.0f, 0.0f, 295.0f), point3(430.0f, 330.0f, 460.0f), white));
+
   /** camera 객체 생성 및 이미지 렌더링 수행 */
   camera cam;
 
   // 주요 이미지 파라미터 설정
   cam.image_width = 600;
   cam.aspect_ratio = 1.0f;
-  cam.samples_per_pixel = 200;
+  cam.samples_per_pixel = 100;
   cam.max_depth = 50;
   // ray 와 충돌한 물체가 없을 경우 반환할 scene 배경색(solid color. no gradient) 정의
   cam.background = color(0.0f, 0.0f, 0.0f);
