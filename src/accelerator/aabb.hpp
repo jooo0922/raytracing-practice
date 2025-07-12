@@ -160,6 +160,18 @@ const aabb aabb::empty = aabb(interval::empty, interval::empty, interval::empty)
 // 무한한 AABB 정의 -> 어떤 AABB와 비교해도 포함되도록 만들기 위해 사용
 const aabb aabb::universe = aabb(interval::universe, interval::universe, interval::universe);
 
+// 주어진 AABB(bbox)에 offset 벡터를 더하여, 이동된 위치의 AABB를 반환하는 연산자 오버로딩. → 각 축의 min/max 범위에 offset 값을 더해 AABB를 평행 이동
+aabb operator+(const aabb &bbox, const vec3 &offset)
+{
+  return aabb(bbox.x + offset.x(), bbox.y + offset.y(), bbox.z + offset.z());
+};
+
+// offset + bbox 형태의 표현도 지원하기 위한 대칭 오버로딩 함수
+aabb operator+(const vec3 &offset, const aabb &bbox)
+{
+  return bbox + offset;
+};
+
 /**
  * aabb::hit()
  *
