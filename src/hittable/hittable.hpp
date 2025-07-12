@@ -49,6 +49,56 @@ public:
   virtual aabb bounding_box() const = 0;
 };
 
+/**
+ * translate 클래스
+ *
+ * 내부 hittable object를 외부에서 "offset만큼 이동된 객체"처럼 보이게 하는 래퍼 클래스.
+ *
+ * 핵심 철학은 다음과 같다:
+ *
+ * 1. object 자체는 변하지 않는다. (정점, AABB 등은 object 로컬 좌표계 기준 그대로 유지)
+ * 2. 대신 ray를 역방향으로 변환하여 object 로컬 좌표계로 보내 hit test를 수행한다.
+ * 3. 교차 결과(hit point)는 다시 월드 좌표계로 변환하여 일관된 결과를 제공한다.
+ * **참고로 "object 로컬 좌표계" 는 실제 hittable object 위치가 원점인 좌표계를 의미**
+ *
+ * 특히 AABB 처리 방식이 중요하다:
+ *
+ * - translate::bounding_box()는 내부 object의 AABB에 offset을 적용한 "월드 좌표계 기준의 AABB"이다.
+ * - 이 AABB는 BVH 가속 구조에서 월드 좌표계 ray와의 빠른 필터링(bbox 충돌 여부 판단)에 사용된다.
+ * - 반면, 내부 object는 로컬 AABB를 사용하고, object 로컬 좌표계로 변환된 ray와 충돌 검사만 수행하면 된다.
+ *
+ * 이 구조 덕분에:
+ * - object는 자신의 좌표계 안에서 "손 하나 까딱하지 않고" 충돌 검사와 AABB 검사만 수행하면 된다.
+ * - 모든 변환과 월드-로컬 좌표계 일치 책임은 translate가 맡는다.
+ */
+class translate : public hittable
+{
+public:
+  bool hit(const ray &r, interval ray_t, hit_record &rec) const override
+  {
+    // object 로컬 좌표계 내에서 hit test 수행을 위해 **월드 좌표계 ray** 를 **object 로컬 좌표계 ray** 로 변환
+    ray offset_r(r.origin() - offset, r.direction(), r.time());
+
+    // **object 로컬 좌표계 ray** 를 전달하여 translate 가 적용될 실제 hittable object 와 hit test 수행
+    // 실제 hittable object 는 정점, normal, AABB 전부 로컬 좌표계 기준이므로 아무 수정 없이 hit test를 수행 가능
+    if (!object->hit(offset_r, ray_t, rec))
+    {
+      return false;
+    }
+
+    // 충돌 지점은 object 로컬 좌표계 기준으로 계산되었으므로, 이를 다시 월드 좌표계로 복원해줘야 실제 충돌 위치로 해석 가능
+    rec.p += offset;
+
+    // 회전이 없는 순수 translation 변환에서는 rec.normal 을 따로 월드 좌표계로 복원하지 않아도 정확함
+
+    return true;
+  };
+
+private:
+  std::shared_ptr<hittable> object; // 로컬 좌표계 기준으로 정의된 실제 hittable object
+  vec3 offset;                      // object가 이동된 것처럼 보이게 할 translation vector -> 실제로는 월드 좌표계 ray 원점이 offset 만큼 이동됨.
+};
+
 /*
   가상 소멸자(destructor)와 default
 
