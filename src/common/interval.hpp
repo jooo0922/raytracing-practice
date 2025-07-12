@@ -62,6 +62,19 @@ public:
   double max;
 };
 
+// 주어진 interval을 displacement만큼 평행 이동시키는 연산자 오버로딩 → min, max 값에 displacement를 더해 이동된 interval 생성.
+interval operator+(const interval &ival, double displacement)
+{
+  return interval(ival.min + displacement, ival.max + displacement);
+};
+
+// displacement + interval 형태의 표현도 지원하기 위한 대칭 오버로딩 함수
+interval operator+(double displacement, const interval &ival)
+{
+  // 내부적으로 interval + displacement 호출
+  return ival + displacement;
+};
+
 // 클래스 외부에서 정적 멤버변수 초기화
 const interval interval::empty = interval(+infinity, -infinity);
 const interval interval::universe = interval(-infinity, +infinity);
