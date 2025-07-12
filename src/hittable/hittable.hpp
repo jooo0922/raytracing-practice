@@ -74,6 +74,15 @@ public:
 class translate : public hittable
 {
 public:
+  translate(std::shared_ptr<hittable> object, const vec3 &offset) : object(object), offset(offset)
+  {
+    /**
+     * 월드 좌표계에서 사용할 이동 변환이 적용된 **월드 좌표계 AABB**를 미리 계산한다.
+     * 내부 object의 로컬 AABB에 offset을 더한 값으로, 외부 BVH 가속 구조 상에서 **월드 좌표계 ray-AABB 교차 검사**에 쓰인다.
+     */
+    bbox = object->bounding_box() + offset;
+  };
+
   bool hit(const ray &r, interval ray_t, hit_record &rec) const override
   {
     // object 로컬 좌표계 내에서 hit test 수행을 위해 **월드 좌표계 ray** 를 **object 로컬 좌표계 ray** 로 변환
@@ -94,9 +103,17 @@ public:
     return true;
   };
 
+  /**
+   * 내부 object 의 월드 좌표계 기준 AABB를 반환
+   * BVH 등의 외부 구조에서 사용될 AABB는 반드시 월드 좌표 기준이어야 하므로, offset 적용됨.
+   * 덕분에 로컬 object 의 월드 좌표계 기준 BVH 트리 가속 필터링 작업을 translate::bounding_box() 에 위임할 수 있게 됨.
+   */
+  aabb bounding_box() const override { return bbox; };
+
 private:
   std::shared_ptr<hittable> object; // 로컬 좌표계 기준으로 정의된 실제 hittable object
   vec3 offset;                      // object가 이동된 것처럼 보이게 할 translation vector -> 실제로는 월드 좌표계 ray 원점이 offset 만큼 이동됨.
+  aabb bbox;                        // 월드 좌표계 기준 이동 변환된 AABB (object->bbox + offset)
 };
 
 /*
